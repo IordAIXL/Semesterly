@@ -64,14 +64,6 @@ button { color: inherit; }
 }
 .topnav button:hover { background: var(--surface-soft); color: var(--ink); }
 .topnav button.active { background: var(--blue-soft); color: var(--blue); }
-.sync-pill {
-  color: var(--muted);
-  background: var(--surface-soft);
-  border-radius: 999px;
-  padding: 8px 12px;
-  font-size: 13px;
-  font-weight: 600;
-}
 .ghost-button {
   border: 1px solid var(--line);
   background: var(--surface);
@@ -349,11 +341,13 @@ button.danger-link:hover, .assignment-actions .danger-link:hover { color: #fff; 
 .risk-list span { display: block; color: var(--muted); font-size: 13px; margin-top: 3px; }
 .focus-timer-card { background: #f8fbff; }
 .timer-task { display: grid; gap: 7px; margin-bottom: 10px; }
-.timer-task span { color: var(--muted); font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
-.timer-task select, .timer-task strong { width: 100%; border: 1px solid var(--line); background: #fff; color: var(--ink); border-radius: 12px; padding: 9px 10px; font-size: 13px; font-weight: 700; }
+.timer-task span, .timer-input span { color: var(--muted); font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+.timer-task select, .timer-task strong, .timer-input input { width: 100%; border: 1px solid var(--line); background: #fff; color: var(--ink); border-radius: 12px; padding: 9px 10px; font-size: 13px; font-weight: 700; }
+.timer-input { display: grid; gap: 7px; margin-bottom: 8px; }
 .timer-face { font-size: 42px; line-height: 1; letter-spacing: -0.04em; color: var(--blue); font-weight: 600; margin: 6px 0 8px; }
 .timer-face.active { text-shadow: 0 0 18px rgba(26, 115, 232, .18); }
 .timer-copy { color: var(--muted); margin: 0 0 12px; font-size: 13px; line-height: 1.4; }
+.timer-footnote { color: var(--muted-2); font-size: 11px; line-height: 1.35; margin: 10px 0 0; }
 .timer-buttons, .timer-controls { display: flex; gap: 8px; flex-wrap: wrap; }
 .timer-buttons { margin-bottom: 10px; }
 .timer-buttons button, .timer-controls button:not(.primary-button) { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 7px 10px; font-size: 12px; font-weight: 700; color: var(--muted); cursor: pointer; }
@@ -492,9 +486,9 @@ button.danger-link:hover, .assignment-actions .danger-link:hover { color: #fff; 
 .calendar-hero h2 { font-size: 30px; font-weight: 500; margin-bottom: 8px; }
 .calendar-hero p { color: var(--muted); margin: 0; }
 .calendar-controls { display: grid; gap: 10px; justify-items: end; }
-.calendar-tabs, .calendar-jump { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-.calendar-tabs button, .calendar-jump button { border: 1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 999px; padding: 9px 13px; font-weight: 700; cursor: pointer; }
-.calendar-tabs button.active, .calendar-jump button:hover { background: var(--blue-soft); color: var(--blue); border-color: transparent; }
+.calendar-tabs, .calendar-jump, .calendar-day-controls { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.calendar-tabs button, .calendar-jump button, .calendar-day-controls button { border: 1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 999px; padding: 9px 13px; font-weight: 700; cursor: pointer; }
+.calendar-tabs button.active, .calendar-jump button:hover, .calendar-day-controls button:hover { background: var(--blue-soft); color: var(--blue); border-color: transparent; }
 .calendar-layout { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 18px; align-items: start; }
 .calendar-layout.day { grid-template-columns: minmax(0, .9fr) 420px; }
 .calendar-board { overflow: hidden; }
@@ -519,7 +513,7 @@ button.danger-link:hover, .assignment-actions .danger-link:hover { color: #fff; 
 @media (max-width: 1100px) {
   .calendar-hero { display: grid; }
   .calendar-controls { justify-items: start; }
-  .calendar-tabs, .calendar-jump { justify-content: flex-start; }
+  .calendar-tabs, .calendar-jump, .calendar-day-controls { justify-content: flex-start; }
   .calendar-layout, .calendar-layout.day { grid-template-columns: 1fr; }
   .calendar-grid.week, .calendar-grid.month { grid-template-columns: 1fr; }
   .calendar-grid-head { display: none; }
@@ -576,6 +570,7 @@ button.danger-link:hover, .assignment-actions .danger-link:hover { color: #fff; 
 .theme-dark .event-card,
 .theme-dark .next-up-grid > div,
 .theme-dark .timer-task strong,
+.theme-dark .timer-input input,
 .theme-dark .timer-buttons button,
 .theme-dark .timer-controls button:not(.primary-button),
 .theme-dark .calendar-cell,
@@ -720,16 +715,6 @@ button.danger-link:hover, .assignment-actions .danger-link:hover { color: #fff; 
     font-size: 20px;
     letter-spacing: -.03em;
   }
-  .brand::after {
-    content: "private workspace";
-    display: block;
-    margin-left: -2px;
-    color: var(--muted);
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-  }
   .brand-mark {
     width: 42px;
     height: 42px;
@@ -766,12 +751,11 @@ button.danger-link:hover, .assignment-actions .danger-link:hover { color: #fff; 
     padding-top: 16px;
     border-top: 1px solid var(--line);
   }
-  .student-select, .sync-pill, .ghost-button {
+  .student-select, .ghost-button {
     width: 100%;
     max-width: none;
     border-radius: 16px;
   }
-  .sync-pill { text-align: center; }
   .main {
     max-width: none;
     margin: 0 0 0 252px;
@@ -867,7 +851,6 @@ button.danger-link:hover, .assignment-actions .danger-link:hover { color: #fff; 
     align-items: center;
   }
   .student-select { max-width: none; min-width: 0; width: 100%; padding: 8px 10px; }
-  .sync-pill { padding: 8px 10px; font-size: 11px; white-space: nowrap; }
   .ghost-button { padding: 8px 10px; }
   .topnav {
     position: fixed;
@@ -977,7 +960,6 @@ button.danger-link:hover, .assignment-actions .danger-link:hover { color: #fff; 
 
 @media (max-width: 380px) {
   .topbar-right { grid-template-columns: 1fr 1fr; }
-  .sync-pill { grid-column: 1 / -1; text-align: center; }
   .topnav button { font-size: 11px; }
   h1 { font-size: 30px; }
   .calendar-tabs, .calendar-jump, .add-tabs { grid-template-columns: 1fr; }

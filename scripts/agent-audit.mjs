@@ -14,7 +14,7 @@ function check(name, condition, hint) {
 check(
   "primary nav excludes Options",
   app.includes('type View = "dashboard" | "calendar" | "courses" | "profile" | "admin"') && !app.includes('"options"'),
-  "View/nav should be Today, Calendar, Courses, Profile, and hidden Admin only.",
+  "View/nav should be Dashboard, Calendar, Courses, Profile, and hidden Admin only.",
 );
 
 check(
@@ -30,9 +30,13 @@ check(
 );
 
 check(
-  "day selector is interactive",
-  app.includes('setSelectedDate((date) => addDays(date, -1))') && app.includes('setSelectedDate(day.date)') && app.includes('setSelectedDate((date) => addDays(date, 1))'),
-  "Day selector needs back/next controls and clickable day chips.",
+  "global day selector removed, calendar day controls remain",
+  !app.includes('aria-label="Day selector"') &&
+    !app.includes('setSelectedDate(day.date)') &&
+    app.includes('className="calendar-day-controls"') &&
+    app.includes('setSelectedDate((date) => addDays(date, -1))') &&
+    app.includes('setSelectedDate((date) => addDays(date, 1))'),
+  "Dashboard/Calendar should not use the top day selector; Calendar day view keeps simple Back/Next controls.",
 );
 
 check(
