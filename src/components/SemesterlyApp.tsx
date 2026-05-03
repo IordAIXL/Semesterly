@@ -50,6 +50,13 @@ type ApiStudent = {
   events: Array<ScheduleEvent & { userId?: string; startsAt: string | Date; endsAt: string | Date }>;
 };
 
+type StudentProfile = {
+  name: string;
+  school?: string | null;
+  year?: string | null;
+  major?: string | null;
+};
+
 const STORAGE_KEY = "semesterly.mvp.state.v2";
 const today = new Date();
 const isoDate = format(today, "yyyy-MM-dd");
@@ -130,6 +137,7 @@ export function SemesterlyApp() {
   const [view, setView] = useState<View>("dashboard");
   const [studentId, setStudentId] = useState(defaultStudent.id);
   const selectedStudent = allSampleStudents.find((student) => student.id === studentId) ?? defaultStudent;
+  const [studentProfile, setStudentProfile] = useState<StudentProfile>({ name: defaultStudent.name, school: defaultStudent.school, year: defaultStudent.year, major: defaultStudent.major });
   const [courses, setCourses] = useState<Course[]>(defaultStudent.courses);
   const [tasks, setTasks] = useState<Task[]>(defaultStudent.tasks);
   const [schedule, setSchedule] = useState<ScheduleEvent[]>(defaultStudent.schedule);
@@ -147,9 +155,9 @@ export function SemesterlyApp() {
   const [dataMode, setDataMode] = useState<DataMode>("loading");
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [useCookieSession, setUseCookieSession] = useState(false);
-  const [loginEmail, setLoginEmail] = useState("emma@semesterly.local");
-  const [loginPassword, setLoginPassword] = useState("semesterly-demo");
-  const [signupName, setSignupName] = useState("New Student");
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [signupName, setSignupName] = useState("");
   const [authNotice, setAuthNotice] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
 
@@ -202,6 +210,7 @@ export function SemesterlyApp() {
   })).sort((a, b) => b.minutes - a.minutes);
 
   function applyApiStudent(user: ApiStudent) {
+    setStudentProfile({ name: user.name, school: user.school, year: user.year, major: user.major });
     setCourses(user.courses.map((course) => ({ id: course.id, code: course.code, name: course.name, color: course.color, importance: course.importance })));
     setTasks(user.tasks.map(mapTask));
     setSchedule(user.events.map(mapEvent));
@@ -210,6 +219,7 @@ export function SemesterlyApp() {
 
   function applyLocalStudent(id: string, initial = false) {
     const fallback = allSampleStudents.find((student) => student.id === id) ?? defaultStudent;
+    setStudentProfile({ name: fallback.name, school: fallback.school, year: fallback.year, major: fallback.major });
     const saved = initial ? window.localStorage.getItem(STORAGE_KEY) : null;
     if (saved) {
       try {
@@ -536,7 +546,8 @@ export function SemesterlyApp() {
       setDataMode("api");
       setLoaded(true);
       setAuthNotice(`Signed in as ${loginBody.user.name}.`);
-      setActionNotice("Signed in with a secure server session.");
+      setActionNotice("Signed in with a secure private account.");
+      setView(meBody.user.courses.length ? "dashboard" : "courses");
     } catch (error) {
       setAuthNotice(error instanceof Error ? error.message : "Login failed");
     }
@@ -562,7 +573,8 @@ export function SemesterlyApp() {
       setDataMode("api");
       setLoaded(true);
       setAuthNotice(`Created account for ${registerBody.user.name}.`);
-      setActionNotice("Created a real account with a secure server session.");
+      setActionNotice("Private account created. Add your first course to start Semesterly.");
+      setView("courses");
     } catch (error) {
       setAuthNotice(error instanceof Error ? error.message : "Could not create account");
     }
@@ -572,7 +584,7 @@ export function SemesterlyApp() {
     await fetch("/api/auth/logout", { method: "POST" }).catch(() => undefined);
     setUseCookieSession(false);
     setSessionToken(null);
-    setAuthNotice("Signed out. Demo mode restored.");
+    setAuthNotice("Signed out. Create or sign in to a private account to continue.");
     await loadStudentWorkspace(defaultStudent.id);
   }
 
@@ -607,6 +619,28 @@ export function SemesterlyApp() {
       setAdminUnlocked(false);
       setActionNotice("Admin unlock failed. Check the server admin token.");
     }
+  }
+
+  if (!loaded) {
+    return <AccountLoading theme={theme} />;
+  }
+
+  if (!useCookieSession) {
+    return (
+      <AccountGate
+        theme={theme}
+        setTheme={setTheme}
+        signupName={signupName}
+        setSignupName={setSignupName}
+        loginEmail={loginEmail}
+        setLoginEmail={setLoginEmail}
+        loginPassword={loginPassword}
+        setLoginPassword={setLoginPassword}
+        authNotice={authNotice}
+        loginWithPassword={loginWithPassword}
+        createAccount={createAccount}
+      />
+    );
   }
 
   return (
@@ -669,13 +703,13 @@ export function SemesterlyApp() {
               <DemoPathCard setView={setView} setCalendarMode={setCalendarMode} />
               <article className="card day-card primary-focus-card">
                 <div className="brief-strip">
-                  <span>Good morning, {selectedStudent.name.split(" ")[0]}</span>
+                  <span>Good morning, {studentProfile.name.split(" ")[0] || "Student"}</span>
                   <strong>{topTask ? `Do ${topTask.title} first` : "No urgent work"}</strong>
                   <span>{nextEvent ? `Next: ${nextEvent.title} at ${format(parseISO(nextEvent.startsAt), "h:mm a")}` : "Calendar open"}</span>
                 </div>
                 <div className="day-card-main">
                   <div>
-                    <p className="eyebrow">{selectedStudent.name} · {selectedStudent.school} · {selectedStudent.major}</p>
+                    <p className="eyebrow">{studentProfile.name} · {studentProfile.school ?? "Your school"} · {studentProfile.major ?? "Your major"}</p>
                     <h2>{dayTone} day. {topTask ? "Start here." : "You’re clear."}</h2>
                     <p>{topTask ? `${topTask.title} is your best first move. ${topTask.reason}` : "No open priority tasks right now."}</p>
                   </div>
@@ -731,7 +765,7 @@ export function SemesterlyApp() {
 
         {view === "profile" && (
           <ProfilePage
-            student={selectedStudent}
+            student={studentProfile}
             courses={courses}
             tasks={tasks}
             schedule={schedule}
@@ -796,6 +830,77 @@ export function SemesterlyApp() {
 
 function Metric({ label, value }: { label: string; value: string | number }) {
   return <div className="metric"><strong>{value}</strong><span>{label}</span></div>;
+}
+
+function AccountLoading({ theme }: { theme: "light" | "dark" }) {
+  return (
+    <div className={`app-frame account-gate-frame ${theme === "dark" ? "theme-dark" : ""}`}>
+      <main className="account-gate loading-gate">
+        <section className="card account-card loading-card">
+          <div className="brand account-brand"><span className="brand-mark">S</span> Semesterly</div>
+          <p className="eyebrow">Checking account</p>
+          <h1>Loading your private workspace…</h1>
+          <p className="subtitle">If no session exists, Semesterly will ask you to create an account first.</p>
+        </section>
+      </main>
+    </div>
+  );
+}
+
+function AccountGate({
+  theme,
+  setTheme,
+  signupName,
+  setSignupName,
+  loginEmail,
+  setLoginEmail,
+  loginPassword,
+  setLoginPassword,
+  authNotice,
+  loginWithPassword,
+  createAccount,
+}: {
+  theme: "light" | "dark";
+  setTheme: (theme: "light" | "dark") => void;
+  signupName: string;
+  setSignupName: (name: string) => void;
+  loginEmail: string;
+  setLoginEmail: (email: string) => void;
+  loginPassword: string;
+  setLoginPassword: (password: string) => void;
+  authNotice: string | null;
+  loginWithPassword: () => void;
+  createAccount: () => void;
+}) {
+  return (
+    <div className={`app-frame account-gate-frame ${theme === "dark" ? "theme-dark" : ""}`}>
+      <main className="account-gate">
+        <section className="account-gate-copy">
+          <div className="brand account-brand"><span className="brand-mark">S</span> Semesterly</div>
+          <p className="eyebrow">Private student workspace</p>
+          <h1>Create your account first.</h1>
+          <p className="subtitle">Semesterly keeps classes, assignments, calendar items, and study plans inside your own secure account. After this, you’ll add courses and coursework.</p>
+          <div className="onboarding-steps" aria-label="Setup steps">
+            <div><strong>1</strong><span>Create private account</span></div>
+            <div><strong>2</strong><span>Add classes</span></div>
+            <div><strong>3</strong><span>Add assignments and exams</span></div>
+          </div>
+        </section>
+
+        <section className="card account-card" aria-label="Create account">
+          <div className="card-title-row"><h2>Start Semesterly</h2><span>Required</span></div>
+          <label className="setting-row"><span>Name</span><input value={signupName} onChange={(event) => setSignupName(event.target.value)} placeholder="Your name" type="text" /></label>
+          <label className="setting-row"><span>Email</span><input value={loginEmail} onChange={(event) => setLoginEmail(event.target.value)} placeholder="you@example.com" type="email" /></label>
+          <label className="setting-row"><span>Password</span><input value={loginPassword} onChange={(event) => setLoginPassword(event.target.value)} placeholder="At least 10 characters" type="password" /></label>
+          <button className="primary-button" onClick={createAccount}>Create private account</button>
+          <div className="divider"><span>Already have one?</span></div>
+          <button className="ghost-button full-width" onClick={loginWithPassword}>Sign in</button>
+          <label className="setting-row compact-theme"><span>Theme</span><select value={theme} onChange={(event) => setTheme(event.target.value as "light" | "dark")}><option value="light">Light</option><option value="dark">Dark</option></select></label>
+          {authNotice && <p className="fine-print">{authNotice}</p>}
+        </section>
+      </main>
+    </div>
+  );
 }
 
 function DemoPathCard({ setView, setCalendarMode }: { setView: (view: View) => void; setCalendarMode: (mode: CalendarMode) => void }) {
@@ -895,7 +1000,7 @@ function ProfilePage({
   setView,
   onClear,
 }: {
-  student: typeof defaultStudent;
+  student: StudentProfile;
   courses: Course[];
   tasks: Task[];
   schedule: ScheduleEvent[];
