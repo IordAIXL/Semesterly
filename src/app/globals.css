@@ -628,6 +628,8 @@ button.danger-link:hover, .assignment-actions .danger-link:hover { color: #fff; 
 .profile-panel { display: grid; gap: 14px; }
 .setting-row { display: grid; gap: 8px; color: var(--muted); font-size: 13px; font-weight: 700; }
 .setting-row select, .setting-row input { border: 1px solid var(--line); border-radius: 12px; padding: 10px 11px; background: #fff; color: var(--ink); }
+.checkbox-row { grid-template-columns: 1fr auto; align-items: center; }
+.checkbox-row input { width: 20px; height: 20px; padding: 0; accent-color: var(--blue); }
 .auth-panel .muted-copy strong { color: var(--ink); }
 .auth-actions { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; }
 .auth-actions.three { grid-template-columns: 1fr auto auto; }
