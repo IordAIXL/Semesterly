@@ -42,6 +42,7 @@ model User {
   courses   Course[]
   tasks     Task[]
   events    Event[]
+  importBatches ImportBatch[]
 }
 
 model Term {
@@ -111,6 +112,38 @@ model Event {
   source    String        @default("manual")
   user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   course    Course?       @relation(fields: [courseId], references: [id], onDelete: SetNull)
+}
+
+model ImportBatch {
+  id          String       @id @default(cuid())
+  userId      String
+  kind        String
+  status      String       @default("NEEDS_REVIEW")
+  sourceName  String?
+  sourceMime  String?
+  sourceText  String?
+  summary     String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  confirmedAt DateTime?
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items       ImportItem[]
+
+  @@index([userId, createdAt])
+}
+
+model ImportItem {
+  id         String      @id @default(cuid())
+  batchId    String
+  itemType   String
+  status     String      @default("PENDING")
+  confidence Float?
+  rawText    String?
+  data       String
+  createdAt  DateTime    @default(now())
+  batch      ImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@index([batchId, status])
 }
 
 model AdminAuditLog {
