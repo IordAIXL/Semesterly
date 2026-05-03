@@ -1,0 +1,123 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum TaskStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  DONE
+}
+
+enum EventCategory {
+  CLASS
+  STUDY
+  PERSONAL
+  WORK
+  CLUB
+  OTHER
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name         String
+  email        String?  @unique
+  passwordHash String?
+  role         Role     @default(USER)
+  timezone  String   @default("America/Chicago")
+  school    String?
+  year      String?
+  major     String?
+  createdAt DateTime @default(now())
+  terms     Term[]
+  courses   Course[]
+  tasks     Task[]
+  events    Event[]
+}
+
+model Term {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean  @default(true)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courses   Course[]
+}
+
+model Course {
+  id          String          @id @default(cuid())
+  userId      String
+  termId      String?
+  code        String
+  name        String
+  color       String          @default("#2563eb")
+  professor   String?
+  location    String?
+  importance  Int             @default(3)
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  term        Term?           @relation(fields: [termId], references: [id], onDelete: SetNull)
+  meetings    CourseMeeting[]
+  tasks       Task[]
+  events      Event[]
+}
+
+model CourseMeeting {
+  id        String @id @default(cuid())
+  courseId  String
+  dayOfWeek Int
+  startTime String
+  endTime   String
+  location  String?
+  course    Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+model Task {
+  id               String     @id @default(cuid())
+  userId           String
+  courseId         String?
+  title            String
+  notes            String?
+  dueAt            DateTime
+  estimatedMinutes Int        @default(60)
+  importance       Int        @default(3)
+  status           TaskStatus @default(NOT_STARTED)
+  priorityScore    Int        @default(0)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  user             User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course           Course?    @relation(fields: [courseId], references: [id], onDelete: SetNull)
+}
+
+model Event {
+  id        String        @id @default(cuid())
+  userId    String
+  courseId  String?
+  title     String
+  startsAt  DateTime
+  endsAt    DateTime
+  location  String?
+  category  EventCategory @default(OTHER)
+  source    String        @default("manual")
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course    Course?       @relation(fields: [courseId], references: [id], onDelete: SetNull)
+}
+
+model AdminAuditLog {
+  id        String   @id @default(cuid())
+  action    String
+  actor     String
+  createdAt DateTime @default(now())
+  metadata  String?
+}

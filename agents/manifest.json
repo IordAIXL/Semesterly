@@ -1,0 +1,79 @@
+{
+  "version": 1,
+  "purpose": "Standing development-agent roster for building Semesterly.",
+  "runtimeNote": "If a freshly spawned subagent refuses its first assigned task, send a short harmless warm-up/follow-up message, then send the generated prompt with sessions_send. This was verified with AGENT_RUNTIME_OK.",
+  "rules": [
+    "Use one agent per focused outcome.",
+    "Prefer repo edits and validation over long chat plans.",
+    "Every report ends with Ship / Fix next / Blocked by.",
+    "Implementation agents must state files changed and validation results.",
+    "Do not expose admin/user data without server-side protection."
+  ],
+  "agents": [
+    {
+      "id": "product-strategist",
+      "brief": "agents/product-strategist.md",
+      "owns": ["MVP scope", "roadmap", "demo narrative", "competitive positioning"],
+      "defaultFiles": ["README.md", "docs/product-brief.md", "docs/roadmap.md", "docs/competitive-strategy.md", "docs/next-build-steps.md", "docs/demo-script.md"],
+      "validation": ["npm run agent:check"],
+      "bestFor": "Deciding what to build next and how to explain it."
+    },
+    {
+      "id": "ux-demo-designer",
+      "brief": "agents/ux-demo-designer.md",
+      "owns": ["laptop demo polish", "navigation", "copy", "visual clarity"],
+      "defaultFiles": ["src/components/SemesterlyApp.tsx", "src/app/globals.css", "docs/ux.md", "docs/demo-script.md", "docs/build-status.md"],
+      "validation": ["npm run typecheck", "npx next build", "npm run agent:audit"],
+      "bestFor": "Making the app feel obvious, clean, and demo-ready."
+    },
+    {
+      "id": "frontend-builder",
+      "brief": "agents/frontend-builder.md",
+      "owns": ["Next.js UI", "React state", "CSS", "local persistence"],
+      "defaultFiles": ["src/components/SemesterlyApp.tsx", "src/app/globals.css", "src/lib/types.ts", "src/lib/sample-users.ts", "AGENTS.md"],
+      "validation": ["npm run typecheck", "npx next build", "npm run smoke", "npm run agent:audit"],
+      "bestFor": "Implementing focused UI changes."
+    },
+    {
+      "id": "backend-security",
+      "brief": "agents/backend-security.md",
+      "owns": ["API routes", "Prisma ownership", "privacy", "admin protection", "smoke tests"],
+      "defaultFiles": ["prisma/schema.prisma", "src/app/api", "scripts/smoke.mjs", "docs/security-and-trust.md", "docs/api-plan.md", "docs/admin-access.md"],
+      "validation": ["npx prisma validate", "npm run typecheck", "npm run smoke", "npm run agent:audit"],
+      "bestFor": "Keeping trust, isolation, and backend behavior correct."
+    },
+    {
+      "id": "qa-release",
+      "brief": "agents/qa-release.md",
+      "owns": ["validation", "release verdict", "demo blockers", "build health"],
+      "defaultFiles": ["package.json", "scripts/smoke.mjs", "scripts/agent-audit.mjs", "docs/build-status.md", "docs/github-readiness.md", "README.md"],
+      "validation": ["npm run typecheck", "npx next build", "npm run smoke", "npm run agent:audit", "npm run agent:check"],
+      "bestFor": "Deciding if the current repo is demo-ready."
+    },
+    {
+      "id": "growth-research",
+      "brief": "agents/growth-research.md",
+      "owns": ["student workflow research", "positioning", "copy angles", "market gaps"],
+      "defaultFiles": ["docs/research-notes.md", "docs/competitive-strategy.md", "docs/product-brief.md", "docs/roadmap.md"],
+      "validation": ["npm run agent:check"],
+      "bestFor": "Turning market/student pain into product decisions."
+    }
+  ],
+  "workflows": [
+    {
+      "id": "demo-polish-loop",
+      "steps": ["ux-demo-designer", "frontend-builder", "qa-release"],
+      "goal": "Find, implement, and verify visible demo improvements."
+    },
+    {
+      "id": "trust-hardening-loop",
+      "steps": ["backend-security", "frontend-builder", "qa-release"],
+      "goal": "Improve privacy/admin controls and prove them with tests."
+    },
+    {
+      "id": "strategy-to-build-loop",
+      "steps": ["product-strategist", "ux-demo-designer", "frontend-builder", "qa-release"],
+      "goal": "Convert product direction into a validated build patch."
+    }
+  ]
+}
