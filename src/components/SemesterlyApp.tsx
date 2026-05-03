@@ -148,6 +148,8 @@ export function SemesterlyApp() {
   const [adminCode, setAdminCode] = useState("");
   const [adminUnlocked, setAdminUnlocked] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [focusBreaksEnabled, setFocusBreaksEnabled] = useState(false);
+  const [focusBreakMinutes, setFocusBreakMinutes] = useState(5);
   const [calendarMode, setCalendarMode] = useState<CalendarMode>("week");
   const [selectedDate, setSelectedDate] = useState(today);
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
@@ -178,8 +180,8 @@ export function SemesterlyApp() {
 
   useEffect(() => {
     if (!loaded) return;
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ courses, tasks, schedule, theme }));
-  }, [courses, tasks, schedule, theme, loaded]);
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ courses, tasks, schedule, theme, focusBreaksEnabled, focusBreakMinutes }));
+  }, [courses, tasks, schedule, theme, focusBreaksEnabled, focusBreakMinutes, loaded]);
 
   useEffect(() => {
     if (!actionNotice) return;
@@ -223,11 +225,13 @@ export function SemesterlyApp() {
     const saved = initial ? window.localStorage.getItem(STORAGE_KEY) : null;
     if (saved) {
       try {
-        const parsed = JSON.parse(saved) as { courses: Course[]; tasks: Task[]; schedule: ScheduleEvent[]; theme?: "light" | "dark" };
+        const parsed = JSON.parse(saved) as { courses: Course[]; tasks: Task[]; schedule: ScheduleEvent[]; theme?: "light" | "dark"; focusBreaksEnabled?: boolean; focusBreakMinutes?: number };
         setCourses(parsed.courses?.length ? parsed.courses : fallback.courses);
         setTasks(parsed.tasks?.length ? parsed.tasks : fallback.tasks);
         setSchedule(parsed.schedule?.length ? parsed.schedule : fallback.schedule);
         setTheme(parsed.theme === "dark" ? "dark" : "light");
+        setFocusBreaksEnabled(Boolean(parsed.focusBreaksEnabled));
+        if (typeof parsed.focusBreakMinutes === "number" && Number.isFinite(parsed.focusBreakMinutes)) setFocusBreakMinutes(Math.min(30, Math.max(1, parsed.focusBreakMinutes)));
         return;
       } catch {
         window.localStorage.removeItem(STORAGE_KEY);
@@ -736,6 +740,7 @@ export function SemesterlyApp() {
             <div className="right-stack simple-today-panel">
               <NextUpCard nextEvent={nextEvent} topTask={topTask} />
               <ScheduleCard schedule={todaysSchedule.length ? todaysSchedule : sortedSchedule.slice(0, 4)} courses={courses} title={todaysSchedule.length ? "Today’s schedule" : "Upcoming schedule"} />
+              {focusBreaksEnabled && <StudyTimerCard tasks={priorities} breakMinutes={focusBreakMinutes} />}
               <SmartCaptureCard value={smartInput} setValue={setSmartInput} addSmartTask={addSmartTask} />
               <QuickAdd taskDraft={taskDraft} setTaskDraft={setTaskDraft} addTask={addTask} courses={courses} />
             </div>
@@ -774,6 +779,10 @@ export function SemesterlyApp() {
             weekMinutes={weekMinutes}
             theme={theme}
             setTheme={setTheme}
+            focusBreaksEnabled={focusBreaksEnabled}
+            setFocusBreaksEnabled={setFocusBreaksEnabled}
+            focusBreakMinutes={focusBreakMinutes}
+            setFocusBreakMinutes={setFocusBreakMinutes}
             adminCode={adminCode}
             setAdminCode={setAdminCode}
             adminUnlocked={adminUnlocked}
@@ -982,6 +991,10 @@ function ProfilePage({
   weekMinutes,
   theme,
   setTheme,
+  focusBreaksEnabled,
+  setFocusBreaksEnabled,
+  focusBreakMinutes,
+  setFocusBreakMinutes,
   adminCode,
   setAdminCode,
   adminUnlocked,
@@ -1009,6 +1022,10 @@ function ProfilePage({
   weekMinutes: number;
   theme: "light" | "dark";
   setTheme: (theme: "light" | "dark") => void;
+  focusBreaksEnabled: boolean;
+  setFocusBreaksEnabled: (enabled: boolean) => void;
+  focusBreakMinutes: number;
+  setFocusBreakMinutes: (minutes: number) => void;
   adminCode: string;
   setAdminCode: (code: string) => void;
   adminUnlocked: boolean;
@@ -1086,6 +1103,8 @@ function ProfilePage({
         <article className="card profile-panel">
           <div className="card-title-row"><h2>Preferences</h2><span>Demo settings</span></div>
           <label className="setting-row"><span>Theme</span><select value={theme} onChange={(event) => setTheme(event.target.value as "light" | "dark")}><option value="light">Light</option><option value="dark">Dark</option></select></label>
+          <label className="setting-row checkbox-row"><span>Show break timer</span><input checked={focusBreaksEnabled} onChange={(event) => setFocusBreaksEnabled(event.target.checked)} type="checkbox" /></label>
+          {focusBreaksEnabled && <label className="setting-row"><span>Break length</span><input min="1" max="30" value={focusBreakMinutes} onChange={(event) => setFocusBreakMinutes(Math.min(30, Math.max(1, Number(event.target.value) || 5)))} type="number" /></label>}
           <label className="setting-row"><span>Reminder style</span><select defaultValue="balanced"><option value="quiet">Quiet</option><option value="balanced">Balanced</option><option value="urgent">Urgent</option></select></label>
           <label className="setting-row"><span>Best focus window</span><select defaultValue="evening"><option value="morning">Morning</option><option value="afternoon">Afternoon</option><option value="evening">Evening</option></select></label>
         </article>
@@ -1770,11 +1789,12 @@ function formatTimer(seconds: number) {
   return `${minutes}:${remainingSeconds}`;
 }
 
-function StudyTimerCard({ tasks }: { tasks: ReturnType<typeof prioritizeTasks> }) {
+function StudyTimerCard({ tasks, breakMinutes }: { tasks: ReturnType<typeof prioritizeTasks>; breakMinutes: number }) {
+  const safeBreakMinutes = Math.min(30, Math.max(1, breakMinutes));
   const presets = {
     focus25: { label: "25 min", seconds: 25 * 60, copy: "Short focus sprint." },
     focus50: { label: "50 min", seconds: 50 * 60, copy: "Deep work block." },
-    break5: { label: "Break", seconds: 5 * 60, copy: "Reset before the next block." },
+    break5: { label: `${safeBreakMinutes} min break`, seconds: safeBreakMinutes * 60, copy: "Optional reset before the next block." },
   };
   const [mode, setMode] = useState<keyof typeof presets>("focus25");
   const [secondsLeft, setSecondsLeft] = useState(presets.focus25.seconds);
