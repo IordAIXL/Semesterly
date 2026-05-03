@@ -663,7 +663,7 @@ export function SemesterlyApp() {
     <div className={`app-frame ${theme === "dark" ? "theme-dark" : ""}`}>
       <header className="topbar">
         <div className="topbar-left">
-          <div className="brand"><span className="brand-mark">S</span> Semesterly</div>
+          <div className="brand"><span className="brand-mark">S/</span><span className="brand-name">Semesterly</span></div>
           <nav className="topnav" aria-label="Primary navigation">
             {(["dashboard", "calendar", "courses", "profile", ...(adminUnlocked ? ["admin" as View] : [])] as View[]).map((item) => (
               <button className={view === item ? "active" : ""} key={item} onClick={() => setView(item)}>
@@ -673,7 +673,8 @@ export function SemesterlyApp() {
           </nav>
         </div>
         <div className="topbar-right">
-          <button className="primary-button" onClick={() => setView("courses")}>+ Add course</button>
+          <button className="primary-button" onClick={() => setView("calendar")}>+ Calendar item</button>
+          <button className="ghost-button" onClick={() => setView("courses")}>+ Course</button>
         </div>
       </header>
 
@@ -684,6 +685,13 @@ export function SemesterlyApp() {
             <p className="eyebrow">{format(selectedDate, "EEEE, MMMM d")}</p>
             <h1>{view === "dashboard" ? "Dashboard" : view === "calendar" ? "Calendar" : view === "courses" ? "Courses" : view === "profile" ? "Profile" : "Admin"}</h1>
           </div>
+          {view === "dashboard" && (
+            <div className="ops-strip" aria-label="Fast semester status">
+              <span>Now</span><strong>{topTask ? topTask.title : "Clear"}</strong>
+              <span>Next</span><strong>{nextEvent ? format(parseISO(nextEvent.startsAt), "h:mm a") : "Open"}</strong>
+              <span>Load</span><strong>{dayLoad} items</strong>
+            </div>
+          )}
         </section>
 
         {view === "dashboard" && (
@@ -691,7 +699,7 @@ export function SemesterlyApp() {
             <div className="left-stack">
               <article className="card day-card primary-focus-card">
                 <div className="brief-strip">
-                  <span>Good morning, {studentProfile.name.split(" ")[0] || "Student"}</span>
+                  <span>Start line</span>
                   <strong>{topTask ? `Do ${topTask.title} first` : "No urgent work"}</strong>
                   <span>{nextEvent ? `Next: ${nextEvent.title} at ${format(parseISO(nextEvent.startsAt), "h:mm a")}` : "Calendar open"}</span>
                 </div>
