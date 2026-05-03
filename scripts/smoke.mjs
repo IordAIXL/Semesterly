@@ -262,6 +262,51 @@ await check("event create patch delete lifecycle works", async () => {
   if (!deleted.ok) throw new Error("event delete failed");
 });
 
+await check("review-first imports create draft batches", async () => {
+  const dueAt = new Date(Date.now() + 172800000).toISOString();
+  const body = await json("/api/imports", {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-user-id": "emma" },
+    body: JSON.stringify({
+      kind: "SYLLABUS",
+      sourceName: "smoke-syllabus.txt",
+      summary: "Smoke syllabus import",
+      items: [
+        { itemType: "TASK", data: { title: "Smoke imported syllabus task", courseCode: "BIOL 111", dueAt, estimatedMinutes: 45, importance: 2 } },
+      ],
+    }),
+  });
+  if (!body.batch?.id || body.batch.status !== "NEEDS_REVIEW") throw new Error("import batch was not created for review");
+  if (body.batch.items?.[0]?.status !== "PENDING") throw new Error("import item should stay pending until review");
+});
+
+await check("reviewed imports confirm into coursework", async () => {
+  const startsAt = new Date(Date.now() + 21600000).toISOString();
+  const endsAt = new Date(Date.now() + 25200000).toISOString();
+  const draft = await json("/api/imports", {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-user-id": "emma" },
+    body: JSON.stringify({
+      kind: "SCHEDULE_SCREENSHOT",
+      sourceName: "weekly-schedule.png",
+      items: [
+        { itemType: "COURSE", data: { code: "SMK 202", name: "Smoke Imported Course", importance: 3 } },
+        { itemType: "EVENT", data: { title: "SMK 202 lecture", courseCode: "SMK 202", startsAt, endsAt, category: "CLASS", location: "Room 100" } },
+      ],
+    }),
+  });
+  const confirmed = await json(`/api/imports/${draft.batch.id}/confirm`, {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-user-id": "emma" },
+    body: JSON.stringify({ approvedItemIds: draft.batch.items.map((item) => item.id) }),
+  });
+  if (!confirmed.ok || confirmed.created.courses.length !== 1 || confirmed.created.events.length !== 1) throw new Error("import confirm did not create course/event");
+  const courseId = confirmed.created.courses[0].id;
+  const eventId = confirmed.created.events[0].id;
+  await json(`/api/events/${eventId}`, { method: "DELETE", headers: { "x-user-id": "emma" } });
+  await json(`/api/courses/${courseId}`, { method: "DELETE", headers: { "x-user-id": "emma" } });
+});
+
 await check("demo reset requires confirmation", async () => {
   const response = await fetch(`${base}/api/demo/reset`, { method: "POST", headers: { "x-user-id": "emma" } });
   if (response.status !== 400) throw new Error(`expected 400, got ${response.status}`);
