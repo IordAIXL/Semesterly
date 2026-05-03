@@ -1,6 +1,6 @@
 "use client";
 
-import { addDays, addMonths, differenceInCalendarDays, endOfMonth, endOfWeek, format, isSameDay, isSameMonth, isToday, parseISO, startOfMonth, startOfWeek } from "date-fns";
+import { addDays, differenceInCalendarDays, endOfMonth, endOfWeek, format, isSameDay, isSameMonth, isToday, parseISO, startOfMonth, startOfWeek } from "date-fns";
 import { useEffect, useMemo, useState } from "react";
 import { allSampleStudents, defaultStudent } from "@/lib/sample-users";
 import { parseTaskInput } from "@/lib/natural-language";
@@ -655,23 +655,14 @@ export function SemesterlyApp() {
           <nav className="topnav" aria-label="Primary navigation">
             {(["dashboard", "calendar", "courses", "profile", ...(adminUnlocked ? ["admin" as View] : [])] as View[]).map((item) => (
               <button className={view === item ? "active" : ""} key={item} onClick={() => setView(item)}>
-                {item === "dashboard" ? "Today" : item === "calendar" ? "Calendar" : item === "courses" ? "Courses" : item === "admin" ? "Admin" : "Profile"}
+                {item === "dashboard" ? "Dashboard" : item === "calendar" ? "Calendar" : item === "courses" ? "Courses" : item === "admin" ? "Admin" : "Profile"}
               </button>
             ))}
           </nav>
         </div>
         <div className="topbar-right">
-          <select
-            className="student-select"
-            value={studentId}
-            onChange={(event) => {
-              void loadStudentWorkspace(event.target.value);
-            }}
-          >
-            {allSampleStudents.map((student) => <option key={student.id} value={student.id}>{student.name}</option>)}
-          </select>
-          <span className="sync-pill">{dataMode === "api" ? "API-backed demo" : dataMode === "loading" ? "Loading workspace" : "Local fallback"}</span>
-          <button className="ghost-button" onClick={() => void resetDemo()}>Reset</button>
+          <span className="sync-pill">Private workspace</span>
+          <button className="primary-button" onClick={() => setView("courses")}>+ Add course</button>
         </div>
       </header>
 
@@ -680,31 +671,27 @@ export function SemesterlyApp() {
         <section className="hero-row">
           <div>
             <p className="eyebrow">{format(selectedDate, "EEEE, MMMM d")}</p>
-            <h1>{view === "dashboard" ? "Today" : view === "calendar" ? "Calendar" : view === "courses" ? "Courses" : view === "profile" ? "Profile" : "Admin"}</h1>
-            <p className="subtitle">
-              {view === "dashboard"
-                ? "Your next move, today’s schedule, and one place to add work."
-                : "Clear student workflow. Nothing extra in the way."}
-            </p>
+            <h1>{view === "dashboard" ? "Dashboard" : view === "calendar" ? "Calendar" : view === "courses" ? "Courses" : view === "profile" ? "Profile" : "Admin"}</h1>
           </div>
-          <div className="week-strip" aria-label="Day selector">
-            <button className="day-nav" aria-label="Previous day" onClick={() => setSelectedDate((date) => addDays(date, -1))}>‹</button>
-            {[-2, -1, 0, 1, 2].map((offset) => {
-              const day = dayName(selectedDate, offset);
-              return (
-                <button className={`day-chip ${offset === 0 ? "active" : ""}`} key={day.date.toISOString()} onClick={() => setSelectedDate(day.date)}>
-                  <span>{day.label}</span><strong>{day.number}</strong>
-                </button>
-              );
-            })}
-            <button className="day-nav" aria-label="Next day" onClick={() => setSelectedDate((date) => addDays(date, 1))}>›</button>
-          </div>
+          {view !== "profile" && view !== "admin" && (
+            <div className="week-strip" aria-label="Day selector">
+              <button className="day-nav" aria-label="Previous day" onClick={() => setSelectedDate((date) => addDays(date, -1))}>{"\u2039"}</button>
+              {[-2, -1, 0, 1, 2].map((offset) => {
+                const day = dayName(selectedDate, offset);
+                return (
+                  <button className={`day-chip ${offset === 0 ? "active" : ""}`} key={day.date.toISOString()} onClick={() => setSelectedDate(day.date)}>
+                    <span>{day.label}</span><strong>{day.number}</strong>
+                  </button>
+                );
+              })}
+              <button className="day-nav" aria-label="Next day" onClick={() => setSelectedDate((date) => addDays(date, 1))}>{"\u203a"}</button>
+            </div>
+          )}
         </section>
 
         {view === "dashboard" && (
           <section className="dashboard-layout">
             <div className="left-stack">
-              <DemoPathCard setView={setView} setCalendarMode={setCalendarMode} />
               <article className="card day-card primary-focus-card">
                 <div className="brief-strip">
                   <span>Good morning, {studentProfile.name.split(" ")[0] || "Student"}</span>
@@ -774,36 +761,14 @@ export function SemesterlyApp() {
             courses={courses}
             tasks={tasks}
             schedule={schedule}
-            priorities={priorities}
-            courseLoads={courseLoads}
-            weekMinutes={weekMinutes}
             theme={theme}
             setTheme={setTheme}
             focusBreaksEnabled={focusBreaksEnabled}
             setFocusBreaksEnabled={setFocusBreaksEnabled}
             focusBreakMinutes={focusBreakMinutes}
             setFocusBreakMinutes={setFocusBreakMinutes}
-            adminCode={adminCode}
-            setAdminCode={setAdminCode}
-            adminUnlocked={adminUnlocked}
-            unlockAdmin={unlockAdmin}
-            loginEmail={loginEmail}
-            setLoginEmail={setLoginEmail}
-            loginPassword={loginPassword}
-            setLoginPassword={setLoginPassword}
-            signupName={signupName}
-            setSignupName={setSignupName}
-            authNotice={authNotice}
-            useCookieSession={useCookieSession}
-            loginWithPassword={loginWithPassword}
-            createAccount={createAccount}
             logout={logout}
-            setView={setView}
-            onClear={() => {
-              resetDemo();
-              setView("dashboard");
-            }}
-          />
+/>
         )}
 
         {view === "calendar" && (
@@ -843,7 +808,7 @@ function Metric({ label, value }: { label: string; value: string | number }) {
 
 function AccountLoading({ theme }: { theme: "light" | "dark" }) {
   return (
-    <div className={`app-frame account-gate-frame ${theme === "dark" ? "theme-dark" : ""}`}>
+    <div className="app-frame account-gate-frame">
       <main className="account-gate loading-gate">
         <section className="card account-card loading-card">
           <div className="brand account-brand"><span className="brand-mark">S</span> Semesterly</div>
@@ -882,7 +847,7 @@ function AccountGate({
   createAccount: () => void;
 }) {
   return (
-    <div className={`app-frame account-gate-frame ${theme === "dark" ? "theme-dark" : ""}`}>
+    <div className="app-frame account-gate-frame">
       <main className="account-gate">
         <section className="account-gate-copy">
           <div className="brand account-brand"><span className="brand-mark">S</span> Semesterly</div>
@@ -897,34 +862,17 @@ function AccountGate({
         </section>
 
         <section className="card account-card" aria-label="Create account">
-          <div className="card-title-row"><h2>Start Semesterly</h2><span>Required</span></div>
+          <div className="card-title-row"><h2>Start Semesterly</h2></div>
           <label className="setting-row"><span>Name</span><input value={signupName} onChange={(event) => setSignupName(event.target.value)} placeholder="Your name" type="text" /></label>
           <label className="setting-row"><span>Email</span><input value={loginEmail} onChange={(event) => setLoginEmail(event.target.value)} placeholder="you@example.com" type="email" /></label>
           <label className="setting-row"><span>Password</span><input value={loginPassword} onChange={(event) => setLoginPassword(event.target.value)} placeholder="At least 10 characters" type="password" /></label>
           <button className="primary-button" onClick={createAccount}>Create private account</button>
           <div className="divider"><span>Already have one?</span></div>
           <button className="ghost-button full-width" onClick={loginWithPassword}>Sign in</button>
-          <label className="setting-row compact-theme"><span>Theme</span><select value={theme} onChange={(event) => setTheme(event.target.value as "light" | "dark")}><option value="light">Light</option><option value="dark">Dark</option></select></label>
           {authNotice && <p className="fine-print">{authNotice}</p>}
         </section>
       </main>
     </div>
-  );
-}
-
-function DemoPathCard({ setView, setCalendarMode }: { setView: (view: View) => void; setCalendarMode: (mode: CalendarMode) => void }) {
-  return (
-    <article className="card demo-path-card">
-      <div>
-        <p className="eyebrow">Start here</p>
-        <h2>One screen for the next move.</h2>
-        <p>Semesterly opens with what to do now, what is next, and quick capture when something new comes up.</p>
-      </div>
-      <div className="demo-path-actions">
-        <button className="primary-button" onClick={() => setView("dashboard")}>Today plan</button>
-        <button onClick={() => { setCalendarMode("week"); setView("calendar"); }}>Calendar</button>
-      </div>
-    </article>
   );
 }
 
@@ -948,7 +896,7 @@ function DailyPlanCard({
 
   return (
     <article className="card daily-plan-card">
-      <div className="card-title-row"><h2>Today plan</h2><span>Demo path</span></div>
+      <div className="card-title-row"><h2>Dashboard plan</h2></div>
       <div className="daily-plan-hero">
         <div>
           <p className="eyebrow">One obvious next move</p>
@@ -983,125 +931,44 @@ function DailyPlanCard({
 
 function ProfilePage({
   student,
-  courses,
-  tasks,
-  schedule,
-  priorities,
-  courseLoads,
-  weekMinutes,
   theme,
   setTheme,
   focusBreaksEnabled,
   setFocusBreaksEnabled,
   focusBreakMinutes,
   setFocusBreakMinutes,
-  adminCode,
-  setAdminCode,
-  adminUnlocked,
-  unlockAdmin,
-  loginEmail,
-  setLoginEmail,
-  loginPassword,
-  setLoginPassword,
-  signupName,
-  setSignupName,
-  authNotice,
-  useCookieSession,
-  loginWithPassword,
-  createAccount,
   logout,
-  setView,
-  onClear,
 }: {
   student: StudentProfile;
   courses: Course[];
   tasks: Task[];
   schedule: ScheduleEvent[];
-  priorities: ReturnType<typeof prioritizeTasks>;
-  courseLoads: { course: Course; minutes: number; open: number }[];
-  weekMinutes: number;
   theme: "light" | "dark";
   setTheme: (theme: "light" | "dark") => void;
   focusBreaksEnabled: boolean;
   setFocusBreaksEnabled: (enabled: boolean) => void;
   focusBreakMinutes: number;
   setFocusBreakMinutes: (minutes: number) => void;
-  adminCode: string;
-  setAdminCode: (code: string) => void;
-  adminUnlocked: boolean;
-  unlockAdmin: () => void;
-  loginEmail: string;
-  setLoginEmail: (email: string) => void;
-  loginPassword: string;
-  setLoginPassword: (password: string) => void;
-  signupName: string;
-  setSignupName: (name: string) => void;
-  authNotice: string | null;
-  useCookieSession: boolean;
-  loginWithPassword: () => void;
-  createAccount: () => void;
   logout: () => void;
-  setView: (view: View) => void;
-  onClear: () => void;
 }) {
-  const active = tasks.filter((task) => task.status !== "DONE").length;
-  const done = tasks.filter((task) => task.status === "DONE").length;
-  const setupSteps = [
-    { title: "Account", detail: `${student.name} is loaded.`, done: true, action: "Profile ready", view: "profile" as View },
-    { title: "Courses", detail: `${courses.length} courses ready.`, done: courses.length > 0, action: "Open Courses", view: "courses" as View },
-    { title: "Assignments", detail: `${tasks.length} assignments ready.`, done: tasks.length > 0, action: "Open Courses", view: "courses" as View },
-    { title: "Schedule", detail: `${schedule.length} calendar events ready.`, done: schedule.length > 0, action: "Open Calendar", view: "calendar" as View },
-  ];
-
   return (
     <section className="profile-page">
       <article className="card profile-hero">
         <div className="profile-avatar">{student.name.split(" ").map((part) => part[0]).join("").slice(0, 2)}</div>
         <div>
-          <p className="eyebrow">Main profile</p>
+          <p className="eyebrow">Profile</p>
           <h2>{student.name}</h2>
-          <p>{student.year} · {student.major} · {student.school}</p>
         </div>
       </article>
 
-      <article className="card setup-hero profile-setup-hero">
-        <div>
-          <p className="eyebrow">Setup status</p>
-          <h2>Account setup moved into Profile.</h2>
-          <p>Options is gone; profile owns account readiness, preferences, insights, and trust.</p>
-        </div>
-      </article>
-
-      <div className="setup-grid compact-options profile-setup-grid">
-        {setupSteps.map((step, index) => (
-          <article className="card setup-step" key={step.title}>
-            <div className={step.done ? "setup-check done" : "setup-check"}>{index + 1}</div>
-            <div>
-              <h2>{step.title}</h2>
-              <p>{step.detail}</p>
-              <button onClick={() => setView(step.view)}>{step.action}</button>
-            </div>
-          </article>
-        ))}
-      </div>
-
-      <div className="profile-grid">
-        <article className="card profile-panel auth-panel">
-          <div className="card-title-row"><h2>Account sign-in</h2><span>{useCookieSession ? "Secure session" : "Demo bridge"}</span></div>
-          <p className="muted-copy">Use real email/password auth for market demos. Demo accounts use <strong>semesterly-demo</strong>; new accounts need 10+ character passwords.</p>
-          <label className="setting-row"><span>Name</span><input value={signupName} onChange={(event) => setSignupName(event.target.value)} placeholder="New Student" type="text" /></label>
-          <label className="setting-row"><span>Email</span><input value={loginEmail} onChange={(event) => setLoginEmail(event.target.value)} placeholder="emma@semesterly.local" type="email" /></label>
-          <label className="setting-row"><span>Password</span><input value={loginPassword} onChange={(event) => setLoginPassword(event.target.value)} placeholder="Password" type="password" /></label>
-          <div className="auth-actions three">
-            <button className="primary-button" onClick={loginWithPassword}>Sign in</button>
-            <button className="ghost-button" onClick={createAccount}>Create account</button>
-            <button className="ghost-button" onClick={logout}>Sign out</button>
-          </div>
-          {authNotice && <p className="fine-print">{authNotice}</p>}
+      <div className="profile-grid lean-profile-grid">
+        <article className="card profile-panel">
+          <div className="card-title-row"><h2>Name</h2></div>
+          <label className="setting-row"><span>Name</span><input value={student.name} readOnly type="text" /></label>
         </article>
 
         <article className="card profile-panel">
-          <div className="card-title-row"><h2>Preferences</h2><span>Demo settings</span></div>
+          <div className="card-title-row"><h2>Preferences</h2></div>
           <label className="setting-row"><span>Theme</span><select value={theme} onChange={(event) => setTheme(event.target.value as "light" | "dark")}><option value="light">Light</option><option value="dark">Dark</option></select></label>
           <label className="setting-row checkbox-row"><span>Show break timer</span><input checked={focusBreaksEnabled} onChange={(event) => setFocusBreaksEnabled(event.target.checked)} type="checkbox" /></label>
           {focusBreaksEnabled && <label className="setting-row"><span>Break length</span><input min="1" max="30" value={focusBreakMinutes} onChange={(event) => setFocusBreakMinutes(Math.min(30, Math.max(1, Number(event.target.value) || 5)))} type="number" /></label>}
@@ -1110,29 +977,10 @@ function ProfilePage({
         </article>
 
         <article className="card profile-panel">
-          <div className="card-title-row"><h2>Academic snapshot</h2><span>Current term</span></div>
-          <div className="profile-stats"><Metric label="Courses" value={courses.length} /><Metric label="Open" value={active} /><Metric label="Done" value={done} /></div>
-          <p className="muted-copy">Insights now live on this profile page instead of a separate tab.</p>
-        </article>
-
-        <article className="card profile-panel">
-          <div className="card-title-row"><h2>Admin access</h2><span>Dom only</span></div>
-          {adminUnlocked ? (
-            <button className="primary-button" onClick={() => setView("admin")}>Open admin</button>
-          ) : (
-            <>
-              <p className="muted-copy">Enter the special admin code to reveal the restricted admin page.</p>
-              <div className="admin-form inline">
-                <input value={adminCode} onChange={(event) => setAdminCode(event.target.value)} placeholder="Admin code" type="password" />
-                <button className="primary-button" onClick={unlockAdmin}>Unlock</button>
-              </div>
-            </>
-          )}
+          <div className="card-title-row"><h2>Account</h2></div>
+          <button className="ghost-button full-width" onClick={logout}>Sign out</button>
         </article>
       </div>
-
-      <InsightsPage courses={courses} tasks={tasks} priorities={priorities} courseLoads={courseLoads} weekMinutes={weekMinutes} />
-      <TrustCenter selectedStudent={student.name} courses={courses} tasks={tasks} schedule={schedule} onClear={onClear} />
     </section>
   );
 }
@@ -1172,7 +1020,7 @@ function CoursesPage({
   updateTaskStatus: (id: string, status: TaskStatus) => void;
   deleteTask: (id: string) => void;
 }) {
-  const [addPanel, setAddPanel] = useState<"course" | "assignment" | "exam" | "event">("assignment");
+  const [addPanel, setAddPanel] = useState<"course" | "assignment" | "exam" | "event">("course");
   const selectedCourse = courses.find((course) => course.id === selectedCourseId) ?? courses[0];
   const courseTasks = selectedCourse ? tasks.filter((task) => task.courseId === selectedCourse.id) : [];
   const courseEvents = selectedCourse
@@ -1213,10 +1061,9 @@ function CoursesPage({
         <div>
           <p className="eyebrow">Courses</p>
           <h2>Classes, work, exams, and course-level planning.</h2>
-          <p>Pick a course to open its submenu and see the details that matter.</p>
         </div>
         <details className="add-dropdown">
-          <summary>Add</summary>
+          <summary>Add course</summary>
           <div className="add-menu">
             <div className="add-tabs">
               {(["course", "assignment", "exam", "event"] as const).map((item) => <button key={item} className={addPanel === item ? "active" : ""} onClick={() => {
@@ -1233,21 +1080,10 @@ function CoursesPage({
         </details>
       </article>
 
-      <section className="course-overview-grid">
-        {courseSummaries.slice(0, 4).map((summary) => (
-          <button className={selectedCourse?.id === summary.course.id ? "course-risk-card active" : "course-risk-card"} key={summary.course.id} onClick={() => setSelectedCourseId(summary.course.id)}>
-            <span className="color-dot" style={{ background: summary.course.color }} />
-            <strong>{summary.course.code}</strong>
-            <small>{summary.open.length} open · {minutesLabel(summary.minutes)} · {summary.urgent ? `${summary.urgent} urgent` : "stable"}</small>
-            <em>{summary.nextTask ? `Next: ${summary.nextTask.title}` : "No open work"}</em>
-          </button>
-        ))}
-      </section>
-
       {highestRisk && (
         <article className="card course-risk-strip">
           <div>
-            <p className="eyebrow">Course risk</p>
+            <p className="eyebrow">Courses</p>
             <h2>{highestRisk.course.code} needs the most attention.</h2>
             <p>{highestRisk.nextTask ? `${highestRisk.nextTask.title} is next, with ${minutesLabel(highestRisk.minutes)} open across the course.` : "No open course work right now."}</p>
           </div>
@@ -1287,12 +1123,12 @@ function CoursesPage({
 
             <div className="course-subgrid">
               <article className="card">
-                <div className="card-title-row"><h2>Course calendar</h2><span>{courseEvents.length} items</span></div>
+                <div className="card-title-row"><h2>Course calendar</h2></div>
                 <CalendarAgenda events={courseEvents} courses={courses} />
               </article>
 
               <article className="card">
-                <div className="card-title-row"><h2>Assignments</h2><span>{courseTasks.length} total</span></div>
+                <div className="card-title-row"><h2>Assignments</h2></div>
                 <div className="list-stack">
                   {courseTasks.map((task) => <div className="assignment-row" key={task.id}><div><strong>{task.title}</strong><span>{format(parseISO(task.dueAt), "MMM d, h:mm a")} · {minutesLabel(task.estimatedMinutes)} · {statusLabel(task.status)}</span></div><div className="assignment-actions"><button onClick={() => updateTaskStatus(task.id, task.status === "DONE" ? "NOT_STARTED" : "DONE")}>{task.status === "DONE" ? "Reopen" : "Done"}</button><button className="danger-link" onClick={() => deleteTask(task.id)}>Delete</button></div></div>)}
                   {!courseTasks.length && <p className="empty">No assignments yet.</p>}
@@ -1300,7 +1136,7 @@ function CoursesPage({
               </article>
 
               <article className="card">
-                <div className="card-title-row"><h2>Exams & quizzes</h2><span>Planning</span></div>
+                <div className="card-title-row"><h2>Exams & quizzes</h2></div>
                 <div className="list-stack">
                   {(exams.length ? exams : [{ id: `${selectedCourse.id}-generated-exam`, title: `${selectedCourse.code} checkpoint exam`, dueAt: generatedExamDate.toISOString(), estimatedMinutes: 180, importance: 5, status: "NOT_STARTED" as TaskStatus }]).map((exam) => (
                     <div className="assignment-row" key={exam.id}><div><strong>{exam.title}</strong><span>{format(parseISO(exam.dueAt), "MMM d")} · study target {minutesLabel(exam.estimatedMinutes)}</span></div></div>
@@ -1309,7 +1145,7 @@ function CoursesPage({
               </article>
 
               <article className="card">
-                <div className="card-title-row"><h2>Extra course data</h2><span>Advisor view</span></div>
+                <div className="card-title-row"><h2>Extra course data</h2></div>
                 <ul className="trust-list roomy">
                   <li><strong>Recommended pace</strong><span>{openTasks.length ? `${Math.max(1, Math.ceil(workload / 60 / 5))} focused sessions this week` : "Maintain notes and review before class."}</span></li>
                   <li><strong>Risk signal</strong><span>{openTasks.some((task) => differenceInCalendarDays(parseISO(task.dueAt), new Date()) <= 2) ? "Due soon — prioritize this course." : "Stable — no immediate deadline spike."}</span></li>
@@ -1367,7 +1203,6 @@ function CalendarPage({
         <div>
           <p className="eyebrow">Calendar</p>
           <h2>{mode === "semester" ? `${format(selectedDate, "MMM yyyy")} semester` : format(selectedDate, mode === "month" ? "MMMM yyyy" : "EEEE, MMMM d")}</h2>
-          <p>Day, week, month, and semester views with real date navigation.</p>
         </div>
         <div className="calendar-controls">
           <div className="calendar-tabs" role="tablist" aria-label="Calendar view">
@@ -1375,18 +1210,13 @@ function CalendarPage({
               <button key={item} className={mode === item ? "active" : ""} onClick={() => setMode(item)}>{item[0].toUpperCase() + item.slice(1)}</button>
             ))}
           </div>
-          <div className="calendar-jump">
-            <button onClick={() => setSelectedDate((date) => mode === "month" ? addMonths(date, -1) : mode === "semester" ? addMonths(date, -4) : addDays(date, mode === "week" ? -7 : -1))}>Back</button>
-            <button onClick={() => setSelectedDate(today)}>Today</button>
-            <button onClick={() => setSelectedDate((date) => mode === "month" ? addMonths(date, 1) : mode === "semester" ? addMonths(date, 4) : addDays(date, mode === "week" ? 7 : 1))}>Next</button>
-          </div>
         </div>
       </article>
 
       {mode === "semester" ? (
         <section className="calendar-semester">
           <article className="card">
-            <div className="card-title-row"><h2>Full semester</h2><span>{schedule.length} items</span></div>
+            <div className="card-title-row"><h2>Full semester</h2></div>
             <CalendarAgenda events={schedule} courses={courses} groupByMonth />
           </article>
         </section>
@@ -1425,7 +1255,7 @@ function CalendarPage({
           <div className="right-stack">
             <EventForm eventDraft={eventDraft} setEventDraft={setEventDraft} addEvent={addEvent} courses={courses} />
             <article className="card">
-              <div className="card-title-row"><h2>{mode[0].toUpperCase() + mode.slice(1)} agenda</h2><span>{visibleEvents.length} items</span></div>
+              <div className="card-title-row"><h2>{mode[0].toUpperCase() + mode.slice(1)} agenda</h2></div>
               <CalendarAgenda events={visibleEvents} courses={courses} />
             </article>
           </div>
@@ -1500,7 +1330,7 @@ function InsightsPage({
 
       <div className="insights-grid">
         <article className="card">
-          <div className="card-title-row"><h2>Course load</h2><span>Open work</span></div>
+          <div className="card-title-row"><h2>Course load</h2></div>
           <div className="load-list">
             {courseLoads.map(({ course, minutes, open }) => (
               <div key={course.id}>
@@ -1512,7 +1342,7 @@ function InsightsPage({
         </article>
 
         <article className="card">
-          <div className="card-title-row"><h2>At risk</h2><span>Due soon</span></div>
+          <div className="card-title-row"><h2>At risk</h2></div>
           <div className="risk-list big">
             {openTasks.filter((task) => differenceInCalendarDays(parseISO(task.dueAt), new Date()) <= 2).slice(0, 6).map((task) => (
               <div key={task.id}><strong>{task.title}</strong><span>{format(parseISO(task.dueAt), "EEE h:mm a")} · {minutesLabel(task.estimatedMinutes)}</span></div>
@@ -1521,7 +1351,7 @@ function InsightsPage({
         </article>
 
         <article className="card">
-          <div className="card-title-row"><h2>Best next moves</h2><span>Ranked</span></div>
+          <div className="card-title-row"><h2>Best next moves</h2></div>
           <ol className="focus-plan">
             {priorities.slice(0, 5).map((task) => <li key={task.id}><strong>{task.title}</strong><span>{task.reason}</span></li>)}
           </ol>
@@ -1580,7 +1410,7 @@ function TrustCenter({
 
       <div className="trust-grid">
         <article className="card">
-          <div className="card-title-row"><h2>What users see</h2><span>Private</span></div>
+          <div className="card-title-row"><h2>What users see</h2></div>
           <ul className="trust-list roomy">
             <li><strong>Own data only</strong><span>Students can only access their own courses, assignments, and events.</span></li>
             <li><strong>Clear rankings</strong><span>Every priority explains the reason.</span></li>
@@ -1589,7 +1419,7 @@ function TrustCenter({
         </article>
 
         <article className="card">
-          <div className="card-title-row"><h2>What admin sees</h2><span>Restricted</span></div>
+          <div className="card-title-row"><h2>What admin sees</h2></div>
           <ul className="trust-list roomy">
             <li><strong>All user data</strong><span>Admin can review schools, classes, assignments, and events.</span></li>
             <li><strong>Server protection</strong><span>Admin API requires an environment token now, real roles later.</span></li>
@@ -1598,7 +1428,7 @@ function TrustCenter({
         </article>
 
         <article className="card">
-          <div className="card-title-row"><h2>Production checklist</h2><span>Before beta</span></div>
+          <div className="card-title-row"><h2>Production checklist</h2></div>
           <ul className="check-list">
             <li>Real login</li>
             <li>Admin role checks</li>
@@ -1674,9 +1504,7 @@ function AdminPanel({
         {rows.map((student) => (
           <article className="card admin-user-card" key={student.id}>
             <div className="card-title-row">
-              <h2>{student.name}</h2>
-              <span>{student.year}</span>
-            </div>
+              <h2>{student.name}</h2></div>
             <p className="admin-meta">{student.school} · {student.major}</p>
             <div className="admin-section">
               <strong>Classes</strong>
@@ -1700,7 +1528,7 @@ function AdminPanel({
 function NextUpCard({ nextEvent, topTask }: { nextEvent?: ScheduleEvent; topTask?: ReturnType<typeof prioritizeTasks>[number] }) {
   return (
     <article className="card next-up-card">
-      <div className="card-title-row"><h2>Next up</h2><span>Now</span></div>
+      <div className="card-title-row"><h2>Next up</h2></div>
       <div className="next-up-grid">
         <div>
           <p className="label">Schedule</p>
@@ -1720,7 +1548,7 @@ function NextUpCard({ nextEvent, topTask }: { nextEvent?: ScheduleEvent; topTask
 function DueSoonCard({ tasks, courses }: { tasks: Task[]; courses: Course[] }) {
   return (
     <article className="card compact-card">
-      <div className="card-title-row"><h2>Due soon</h2><span>Next deadlines</span></div>
+      <div className="card-title-row"><h2>Due soon</h2></div>
       <div className="due-list">
         {tasks.map((task) => {
           const course = courses.find((item) => item.id === task.courseId);
@@ -1741,7 +1569,7 @@ function DueSoonCard({ tasks, courses }: { tasks: Task[]; courses: Course[] }) {
 function FocusPlanCard({ tasks }: { tasks: ReturnType<typeof prioritizeTasks> }) {
   return (
     <article className="card compact-card">
-      <div className="card-title-row"><h2>Suggested focus plan</h2><span>Auto-built</span></div>
+      <div className="card-title-row"><h2>Suggested focus plan</h2></div>
       <ol className="focus-plan">
         {tasks.map((task) => <li key={task.id}><strong>{task.title}</strong><span>{minutesLabel(task.estimatedMinutes)} · {task.course?.code ?? "Personal"}</span></li>)}
       </ol>
@@ -1752,7 +1580,7 @@ function FocusPlanCard({ tasks }: { tasks: ReturnType<typeof prioritizeTasks> })
 function CoachCard({ recommendations }: { recommendations: ReturnType<typeof buildRecommendations> }) {
   return (
     <article className="card compact-card coach-card">
-      <div className="card-title-row"><h2>Semesterly coach</h2><span>Smart nudges</span></div>
+      <div className="card-title-row"><h2>Semesterly coach</h2></div>
       <div className="coach-list">
         {recommendations.map((item) => (
           <div className={`coach-item ${item.tone}`} key={item.title}>
@@ -1773,7 +1601,7 @@ function RiskCard({ tasks, courses }: { tasks: Task[]; courses: Course[] }) {
 
   return (
     <article className="card compact-card risk-card">
-      <div className="card-title-row"><h2>Risk watch</h2><span>{risky.length} flagged</span></div>
+      <div className="card-title-row"><h2>Risk watch</h2></div>
       {risky.length === 0 ? <p className="empty">No urgent risks.</p> : (
         <div className="risk-list">
           {risky.map(({ task, days, course }) => <div key={task.id}><strong>{task.title}</strong><span>{course?.code ?? "Personal"} · {days <= 0 ? "due now" : `${days} day${days === 1 ? "" : "s"}`} · {minutesLabel(task.estimatedMinutes)}</span></div>)}
@@ -1828,7 +1656,7 @@ function StudyTimerCard({ tasks, breakMinutes }: { tasks: ReturnType<typeof prio
 
   return (
     <article className="card compact-card focus-timer-card">
-      <div className="card-title-row"><h2>Focus timer</h2><span>{running ? "Running" : "Ready"}</span></div>
+      <div className="card-title-row"><h2>Focus timer</h2></div>
       <div className="timer-task">
         <span>Working on</span>
         {tasks.length ? (
@@ -1853,7 +1681,7 @@ function StudyTimerCard({ tasks, breakMinutes }: { tasks: ReturnType<typeof prio
 function SmartCaptureCard({ value, setValue, addSmartTask }: { value: string; setValue: (value: string) => void; addSmartTask: () => void }) {
   return (
     <article className="card compact-card capture-card">
-      <div className="card-title-row"><h2>Smart capture</h2><span>Beta</span></div>
+      <div className="card-title-row"><h2>Smart capture</h2></div>
       <p>Paste one task or a whole syllabus chunk.</p>
       <textarea value={value} onChange={(event) => setValue(event.target.value)} placeholder={"BIOL lab report due Wed 120 min\nCHEM problem set due Thu 90 min"} />
       <button className="primary-button" onClick={addSmartTask}>Create tasks</button>
@@ -1865,7 +1693,7 @@ function SmartCaptureCard({ value, setValue, addSmartTask }: { value: string; se
 function PriorityCard({ priorities, onDone, onStart, onSnooze, onDelete }: { priorities: ReturnType<typeof prioritizeTasks>; onDone: (id: string) => void; onStart: (id: string) => void; onSnooze: (id: string) => void; onDelete: (id: string) => void }) {
   return (
     <article className="card priority-card">
-      <div className="card-title-row"><h2>Priority queue</h2><span>Explainable ranking</span></div>
+      <div className="card-title-row"><h2>Priority queue</h2></div>
       <div className="priority-list">
         {priorities.length === 0 && <p className="empty">Nothing active. Add an assignment to generate priorities.</p>}
         {priorities.map((task, index) => (
@@ -1895,7 +1723,7 @@ function PriorityCard({ priorities, onDone, onStart, onSnooze, onDelete }: { pri
 function ScheduleCard({ schedule, courses, title = "Today’s schedule" }: { schedule: ScheduleEvent[]; courses: Course[]; title?: string }) {
   return (
     <article className="card">
-      <div className="card-title-row"><h2>{title}</h2><span>{schedule.length} items</span></div>
+      <div className="card-title-row"><h2>{title}</h2></div>
       <div className="timeline">
         {schedule.map((event) => {
           const course = courses.find((item) => item.id === event.courseId);
@@ -1918,7 +1746,7 @@ function ScheduleCard({ schedule, courses, title = "Today’s schedule" }: { sch
 function TrustCard() {
   return (
     <article className="card compact-card trust-card">
-      <div className="card-title-row"><h2>Trust</h2><span>Data safety</span></div>
+      <div className="card-title-row"><h2>Trust</h2></div>
       <ul className="trust-list">
         <li><strong>Private by default</strong><span>This demo stores data only in this browser.</span></li>
         <li><strong>Clear priorities</strong><span>Every ranking shows why.</span></li>
@@ -1930,7 +1758,7 @@ function TrustCard() {
 function QuickAdd({ taskDraft, setTaskDraft, addTask, courses }: { taskDraft: DraftTask; setTaskDraft: (draft: DraftTask) => void; addTask: () => void; courses: Course[] }) {
   return (
     <article className="card">
-      <div className="card-title-row"><h2>Quick add</h2><span>Assignment</span></div>
+      <div className="card-title-row"><h2>Quick add</h2></div>
       <TaskFields taskDraft={taskDraft} setTaskDraft={setTaskDraft} courses={courses} compact />
       <button className="primary-button" onClick={addTask}>Add to dashboard</button>
     </article>

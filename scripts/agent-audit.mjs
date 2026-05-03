@@ -18,9 +18,9 @@ check(
 );
 
 check(
-  "calendar is immediately after Today",
+  "calendar is immediately after Dashboard",
   app.includes('["dashboard", "calendar", "courses", "profile"'),
-  "Top nav order should keep Calendar immediately after Today.",
+  "Top nav order should keep Calendar immediately after Dashboard.",
 );
 
 check(
@@ -54,9 +54,15 @@ check(
 );
 
 check(
-  "profile owns setup status",
-  app.includes('Setup status') && app.includes('Options is gone'),
-  "The top Options setup sections should live in Profile now.",
+  "profile stays lean",
+  app.includes('<div className="card-title-row"><h2>Name</h2></div>') &&
+    app.includes('<div className="card-title-row"><h2>Preferences</h2></div>') &&
+    app.includes('Sign out') &&
+    !app.includes('Account sign-in') &&
+    !app.includes('Admin access') &&
+    !app.includes('Academic snapshot') &&
+    !app.includes('Setup status'),
+  "Profile should only keep the header, name, preferences, and sign-out controls.",
 );
 
 const requiredAgents = [
