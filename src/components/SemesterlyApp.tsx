@@ -1108,11 +1108,16 @@ function AddDropdown({
 
   if (!modalLayer) {
     return (
-      <details className="add-dropdown">
-        <summary>Add</summary>
-        <div className="add-overlay" aria-hidden="true" />
-        {menu}
-      </details>
+      <div className="add-dropdown centered-add-modal" data-open={addOpen ? "true" : "false"}>
+        <button className="add-trigger" type="button" aria-haspopup="dialog" aria-expanded={addOpen} onClick={() => setAddOpen((open) => !open)}>Add</button>
+        {mounted && addOpen && createPortal(
+          <div className="add-portal" data-open="true">
+            <button className="add-overlay" aria-label="Close add menu" type="button" onClick={() => setAddOpen(false)} />
+            {menu}
+          </div>,
+          document.body,
+        )}
+      </div>
     );
   }
 
