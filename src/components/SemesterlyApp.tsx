@@ -706,7 +706,6 @@ export function SemesterlyApp() {
                   addEvent={() => addEvent("dashboard")}
                   smartInput={smartInput}
                   setSmartInput={setSmartInput}
-                  addSmartTask={addSmartTask}
                 />
               </div>
               <PriorityCard priorities={priorities} onDone={(id) => updateTaskStatus(id, "DONE")} onStart={(id) => updateTaskStatus(id, "IN_PROGRESS")} onSnooze={snoozeTask} onDelete={deleteTask} />
@@ -944,7 +943,6 @@ function AddDropdown({
   addEvent,
   smartInput,
   setSmartInput,
-  addSmartTask,
 }: {
   courses: Course[];
   selectedCourse?: Course;
@@ -959,7 +957,6 @@ function AddDropdown({
   addEvent: () => void;
   smartInput: string;
   setSmartInput: (value: string) => void;
-  addSmartTask: () => void;
 }) {
   const [addPanel, setAddPanel] = useState<"course" | "assignment" | "exam" | "event">("course");
 
@@ -978,9 +975,8 @@ function AddDropdown({
         {addPanel === "assignment" && <TaskForm taskDraft={taskDraft} setTaskDraft={setTaskDraft} addTask={addTask} courses={courses} />}
         {addPanel === "exam" && <TaskForm taskDraft={{ ...taskDraft, title: taskDraft.title || "Exam", importance: 5, estimatedMinutes: Math.max(taskDraft.estimatedMinutes, 180), courseId: taskDraft.courseId || selectedCourse?.id || "" }} setTaskDraft={setTaskDraft} addTask={addTask} courses={courses} />}
         {addPanel === "event" && <EventForm eventDraft={eventDraft} setEventDraft={setEventDraft} addEvent={addEvent} courses={courses} />}
-        <div className="add-menu-tools">
-          <QuickAdd taskDraft={taskDraft} setTaskDraft={setTaskDraft} addTask={addTask} courses={courses} />
-          <SmartCaptureCard value={smartInput} setValue={setSmartInput} addSmartTask={addSmartTask} />
+        <div className="add-menu-tools single-tool">
+          <SmartCaptureCard value={smartInput} setValue={setSmartInput} />
         </div>
       </div>
     </details>
@@ -1085,7 +1081,6 @@ function CoursesPage({
             addEvent={() => addEvent("courses")}
             smartInput={smartInput}
             setSmartInput={setSmartInput}
-            addSmartTask={addSmartTask}
           />
         </div>
       </article>
@@ -1715,14 +1710,20 @@ function playTimerAlarm() {
   }
 }
 
-function SmartCaptureCard({ value, setValue, addSmartTask }: { value: string; setValue: (value: string) => void; addSmartTask: () => void }) {
+function SmartCaptureCard({ value, setValue }: { value: string; setValue: (value: string) => void }) {
   return (
-    <article className="card compact-card capture-card">
+    <article className="card compact-card capture-card upload-capture-card">
       <div className="card-title-row"><h2>Smart capture</h2></div>
-      <p>Paste one task or a whole syllabus chunk.</p>
-      <textarea value={value} onChange={(event) => setValue(event.target.value)} placeholder={"BIOL lab report due Wed 120 min\nCHEM problem set due Thu 90 min"} />
-      <button className="primary-button" onClick={addSmartTask}>Create tasks</button>
-      <div className="capture-pills"><span>Multi-line</span><span>Course match</span><span>Due date guess</span></div>
+      <p>Upload a syllabus or schedule screenshot.</p>
+      <label className="file-upload-control">
+        <span>{value || "Choose screenshot"}</span>
+        <input
+          accept="image/*,.pdf"
+          type="file"
+          onChange={(event) => setValue(event.target.files?.[0]?.name ?? "")}
+        />
+      </label>
+      <p className="upload-note">Review before saving.</p>
     </article>
   );
 }

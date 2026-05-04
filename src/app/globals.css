@@ -2126,3 +2126,43 @@ button,
   .dashboard-add-row .add-dropdown summary { width: 100% !important; }
   .add-menu-tools { grid-template-columns: 1fr; }
 }
+
+/* Screenshot upload smart capture. */
+.add-menu-tools.single-tool {
+  grid-template-columns: 1fr;
+}
+.file-upload-control {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 110px;
+  border: 1.5px dashed var(--line);
+  border-radius: 16px;
+  background: var(--surface-soft);
+  color: var(--ink);
+  font-weight: 800;
+  cursor: pointer;
+  text-align: center;
+  padding: 18px;
+}
+.file-upload-control:hover {
+  border-color: var(--blue);
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+.file-upload-control input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.upload-note {
+  margin: 8px 0 0 !important;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+.theme-dark .file-upload-control {
+  background: var(--surface-soft);
+  border-color: var(--line);
+}
