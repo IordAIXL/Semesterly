@@ -2972,3 +2972,106 @@ button,
     margin-right: 0 !important;
   }
 }
+
+/* Mobile modules drawer: tap S/ to slide navigation in from the left. Desktop stays unchanged. */
+.mobile-nav-trigger {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  cursor: default;
+}
+.mobile-nav-backdrop {
+  display: none;
+}
+@media (max-width: 900px) {
+  .app-frame:not(.account-gate-frame) {
+    padding-bottom: 0 !important;
+  }
+  .mobile-nav-trigger {
+    cursor: pointer !important;
+    min-height: 44px !important;
+    width: auto !important;
+    justify-content: flex-start !important;
+  }
+  .topbar {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 900 !important;
+  }
+  .topbar-left {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+  }
+  .mobile-nav-backdrop {
+    display: block !important;
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 1000 !important;
+    min-height: 100vh !important;
+    width: 100vw !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: rgba(15, 23, 42, .30) !important;
+    cursor: default !important;
+  }
+  .topnav {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: auto !important;
+    bottom: auto !important;
+    z-index: 1001 !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    align-content: start !important;
+    gap: 10px !important;
+    width: min(82vw, 304px) !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    margin: 0 !important;
+    padding: calc(22px + env(safe-area-inset-top)) 16px 18px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    border: 1px solid #dbe4ef !important;
+    border-left: 0 !important;
+    border-radius: 0 24px 24px 0 !important;
+    background: #ffffff !important;
+    box-shadow: 28px 0 70px rgba(15, 23, 42, .28) !important;
+    transform: translateX(-110%) !important;
+    transition: transform .22s ease !important;
+  }
+  .topnav[data-open="true"] {
+    transform: translateX(0) !important;
+  }
+  .topnav::before {
+    content: "Semesterly";
+    display: block;
+    margin: 0 0 6px;
+    color: #1f2937;
+    font-size: 20px;
+    font-weight: 850;
+    letter-spacing: -.03em;
+  }
+  .topnav button {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 48px !important;
+    justify-content: flex-start !important;
+    padding: 12px 14px !important;
+    border-radius: 14px !important;
+    text-align: left !important;
+    font-size: 15px !important;
+  }
+  .theme-dark .topnav {
+    border-color: rgba(95, 99, 104, .72) !important;
+    background: #202124 !important;
+    box-shadow: 28px 0 70px rgba(0, 0, 0, .45) !important;
+  }
+  .theme-dark .topnav::before {
+    color: #f8fafc;
+  }
+}

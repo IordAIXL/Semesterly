@@ -182,6 +182,7 @@ function mapEvent(event: ApiStudent["events"][number]): ScheduleEvent {
 
 export function SemesterlyApp() {
   const [view, setView] = useState<View>("dashboard");
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [studentId, setStudentId] = useState(defaultStudent.id);
   const [studentProfile, setStudentProfile] = useState<StudentProfile>({ name: defaultStudent.name, school: defaultStudent.school, year: defaultStudent.year, major: defaultStudent.major, scheduleCategories: defaultScheduleCategories });
   const [courses, setCourses] = useState<Course[]>(defaultStudent.courses);
@@ -355,6 +356,15 @@ export function SemesterlyApp() {
       setLoaded(true);
     }
   }
+
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setMobileNavOpen(false);
+    }
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [mobileNavOpen]);
 
   async function addSmartTask() {
     const parsedTasks = smartInput
@@ -725,10 +735,13 @@ export function SemesterlyApp() {
     <div className={`app-frame ${theme === "dark" ? "theme-dark" : ""}`}>
       <header className="topbar">
         <div className="topbar-left">
-          <div className="brand"><span className="brand-mark">S/</span><span className="brand-name">Semesterly</span></div>
-          <nav className="topnav" aria-label="Primary navigation">
+          <button className="brand mobile-nav-trigger" type="button" aria-label="Open module menu" aria-expanded={mobileNavOpen} onClick={() => {
+            if (typeof window !== "undefined" && window.matchMedia("(max-width: 900px)").matches) setMobileNavOpen((open) => !open);
+          }}><span className="brand-mark">S/</span><span className="brand-name">Semesterly</span></button>
+          {mobileNavOpen && <button className="mobile-nav-backdrop" type="button" aria-label="Close module menu" onClick={() => setMobileNavOpen(false)} />}
+          <nav className="topnav" data-open={mobileNavOpen ? "true" : "false"} aria-label="Primary navigation">
             {(["dashboard", "calendar", "courses", "profile", ...(adminUnlocked ? ["admin" as View] : [])] as View[]).map((item) => (
-              <button className={view === item ? "active" : ""} key={item} onClick={() => setView(item)}>
+              <button className={view === item ? "active" : ""} key={item} onClick={() => { setView(item); setMobileNavOpen(false); }}>
                 {item === "dashboard" ? "Dashboard" : item === "calendar" ? "Calendar" : item === "courses" ? "Courses" : item === "admin" ? "Admin" : "Profile"}
               </button>
             ))}
