@@ -948,6 +948,7 @@ function AddDropdown({
   addEvent,
   smartInput,
   setSmartInput,
+  modalLayer = false,
 }: {
   courses: Course[];
   selectedCourse?: Course;
@@ -962,32 +963,44 @@ function AddDropdown({
   addEvent: () => void;
   smartInput: string;
   setSmartInput: (value: string) => void;
+  modalLayer?: boolean;
 }) {
   const [addPanel, setAddPanel] = useState<"course" | "assignment" | "exam" | "event">("course");
   const [addOpen, setAddOpen] = useState(false);
+  const menu = (
+    <div className="add-menu add-menu-with-tools" role="dialog" aria-label="Add to Semesterly">
+      <div className="add-tabs">
+        {(["course", "assignment", "exam", "event"] as const).map((item) => <button type="button" key={item} className={addPanel === item ? "active" : ""} onClick={() => {
+          setAddPanel(item);
+          if (item === "assignment" || item === "exam") setTaskDraft({ ...taskDraft, courseId: selectedCourse?.id ?? taskDraft.courseId, title: item === "exam" ? "Exam" : taskDraft.title, importance: item === "exam" ? 5 : taskDraft.importance, estimatedMinutes: item === "exam" ? 180 : taskDraft.estimatedMinutes });
+          if (item === "event") setEventDraft({ ...eventDraft, title: selectedCourse ? `${selectedCourse.code} class` : eventDraft.title, category: "CLASS", courseId: selectedCourse?.id ?? eventDraft.courseId });
+        }}>{item === "event" ? "Calendar" : item[0].toUpperCase() + item.slice(1)}</button>)}
+      </div>
+      {addPanel === "course" && <CourseForm courseDraft={courseDraft} setCourseDraft={setCourseDraft} addCourse={addCourse} />}
+      {addPanel === "assignment" && <TaskForm taskDraft={taskDraft} setTaskDraft={setTaskDraft} addTask={addTask} courses={courses} />}
+      {addPanel === "exam" && <TaskForm taskDraft={{ ...taskDraft, title: taskDraft.title || "Exam", importance: 5, estimatedMinutes: Math.max(taskDraft.estimatedMinutes, 180), courseId: taskDraft.courseId || selectedCourse?.id || "" }} setTaskDraft={setTaskDraft} addTask={addTask} courses={courses} />}
+      {addPanel === "event" && <EventForm eventDraft={eventDraft} setEventDraft={setEventDraft} addEvent={addEvent} courses={courses} />}
+      <div className="add-menu-tools single-tool">
+        <SmartCaptureCard value={smartInput} setValue={setSmartInput} />
+      </div>
+    </div>
+  );
+
+  if (!modalLayer) {
+    return (
+      <details className="add-dropdown">
+        <summary>Add</summary>
+        <div className="add-overlay" aria-hidden="true" />
+        {menu}
+      </details>
+    );
+  }
 
   return (
-    <div className="add-dropdown" data-open={addOpen ? "true" : "false"}>
+    <div className="add-dropdown courses-add-modal" data-open={addOpen ? "true" : "false"}>
       <button className="add-trigger" type="button" aria-haspopup="dialog" aria-expanded={addOpen} onClick={() => setAddOpen((open) => !open)}>Add</button>
       {addOpen && <button className="add-overlay" aria-label="Close add menu" type="button" onClick={() => setAddOpen(false)} />}
-      {addOpen && (
-        <div className="add-menu add-menu-with-tools" role="dialog" aria-label="Add to Semesterly">
-          <div className="add-tabs">
-            {(["course", "assignment", "exam", "event"] as const).map((item) => <button type="button" key={item} className={addPanel === item ? "active" : ""} onClick={() => {
-              setAddPanel(item);
-              if (item === "assignment" || item === "exam") setTaskDraft({ ...taskDraft, courseId: selectedCourse?.id ?? taskDraft.courseId, title: item === "exam" ? "Exam" : taskDraft.title, importance: item === "exam" ? 5 : taskDraft.importance, estimatedMinutes: item === "exam" ? 180 : taskDraft.estimatedMinutes });
-              if (item === "event") setEventDraft({ ...eventDraft, title: selectedCourse ? `${selectedCourse.code} class` : eventDraft.title, category: "CLASS", courseId: selectedCourse?.id ?? eventDraft.courseId });
-            }}>{item === "event" ? "Calendar" : item[0].toUpperCase() + item.slice(1)}</button>)}
-          </div>
-          {addPanel === "course" && <CourseForm courseDraft={courseDraft} setCourseDraft={setCourseDraft} addCourse={addCourse} />}
-          {addPanel === "assignment" && <TaskForm taskDraft={taskDraft} setTaskDraft={setTaskDraft} addTask={addTask} courses={courses} />}
-          {addPanel === "exam" && <TaskForm taskDraft={{ ...taskDraft, title: taskDraft.title || "Exam", importance: 5, estimatedMinutes: Math.max(taskDraft.estimatedMinutes, 180), courseId: taskDraft.courseId || selectedCourse?.id || "" }} setTaskDraft={setTaskDraft} addTask={addTask} courses={courses} />}
-          {addPanel === "event" && <EventForm eventDraft={eventDraft} setEventDraft={setEventDraft} addEvent={addEvent} courses={courses} />}
-          <div className="add-menu-tools single-tool">
-            <SmartCaptureCard value={smartInput} setValue={setSmartInput} />
-          </div>
-        </div>
-      )}
+      {addOpen && menu}
     </div>
   );
 }
@@ -1089,6 +1102,7 @@ function CoursesPage({
             addEvent={() => addEvent("courses")}
             smartInput={smartInput}
             setSmartInput={setSmartInput}
+            modalLayer
           />
         </div>
       </article>
