@@ -681,29 +681,17 @@ export function SemesterlyApp() {
             <p className="eyebrow">{format(selectedDate, "EEEE, MMMM d")}</p>
             <h1>{view === "dashboard" ? "Your day" : view === "calendar" ? "Calendar" : view === "courses" ? "Courses" : view === "profile" ? "Profile" : "Admin"}</h1>
           </div>
-          {view === "dashboard" && (
-            <div className="ops-strip" aria-label="Fast semester status">
-              <span>Do first</span><strong>{topTask ? topTask.title : "Nothing urgent"}</strong>
-              <span>Next time</span><strong>{nextEvent ? format(parseISO(nextEvent.startsAt), "h:mm a") : "Open"}</strong>
-              <span>Today</span><strong>{dayLoad} items</strong>
-            </div>
-          )}
         </section>
 
         {view === "dashboard" && (
           <section className="dashboard-layout beginner-layout">
             <div className="left-stack main-flow">
               <article className="card day-card primary-focus-card">
-                <div className="brief-strip">
-                  <span>Step 1</span>
-                  <strong>{topTask ? `Start: ${topTask.title}` : "Check your calendar, then add work"}</strong>
-                  <span>{nextEvent ? `Next class/event: ${nextEvent.title} at ${format(parseISO(nextEvent.startsAt), "h:mm a")}` : "No event blocking you"}</span>
-                </div>
                 <div className="day-card-main">
                   <div>
-                    <p className="eyebrow">{studentProfile.name} · {studentProfile.school ?? "School not set"}</p>
-                    <h2>{topTask ? "One thing first. Then the rest." : "Start simple: add classes or assignments."}</h2>
-                    <p>{topTask ? `${topTask.reason} Semesterly keeps the queue short so you do not have to decode a giant dashboard.` : "A new student should know what to tap first: add a course, add a due date, or check the next calendar item."}</p>
+                    <p className="eyebrow">{studentProfile.name}</p>
+                    <h2>{topTask ? topTask.title : "Add your first class or assignment"}</h2>
+                    <p>{topTask ? topTask.reason : "Start with Courses or Quick add."}</p>
                   </div>
                   <div className="load-badge"><span>Today</span><strong>{dayLoad}</strong><small>items</small></div>
                 </div>
@@ -713,15 +701,6 @@ export function SemesterlyApp() {
                   <Metric label="Time estimate" value={minutesLabel(focusMinutes)} />
                   <Metric label="Finished" value={completedTasks.length} />
                 </div>
-              </article>
-
-              <article className="card starter-card">
-                <div className="card-title-row"><h2>If you are new, use it like this</h2></div>
-                <ol className="starter-steps">
-                  <li><strong>Add your courses</strong><span>Only course name/code first. Details can come later.</span></li>
-                  <li><strong>Put in due dates</strong><span>Assignments and exams become the priority queue.</span></li>
-                  <li><strong>Open this page daily</strong><span>Do the first item, then check the next calendar block.</span></li>
-                </ol>
               </article>
 
               <ScheduleCard schedule={todaysSchedule.length ? todaysSchedule : sortedSchedule.slice(0, 5)} courses={courses} title={todaysSchedule.length ? "Today, in order" : "Next calendar items"} />

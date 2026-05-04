@@ -1784,3 +1784,158 @@ button,
     grid-template-columns: 1fr;
   }
 }
+
+/* Final simplification: real vertical sidebar, no dashboard status strip, less text. */
+@media (min-width: 901px) {
+  .app-frame {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    background: #f6f8fb;
+  }
+  .topbar {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    width: auto;
+    height: 100vh;
+    max-width: none;
+    margin: 0;
+    padding: 22px 16px;
+    border: 0;
+    border-right: 1px solid #e3e8ef;
+    border-radius: 0;
+    box-shadow: none;
+    background: #ffffff;
+  }
+  .topbar-left {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 22px;
+    width: 100%;
+  }
+  .brand {
+    justify-content: flex-start;
+    padding: 0 6px;
+  }
+  .brand-name {
+    display: inline;
+  }
+  .topnav {
+    display: grid;
+    grid-auto-flow: row;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    width: 100%;
+    padding: 0;
+    overflow: visible;
+    border-radius: 0;
+    background: transparent;
+  }
+  .topnav button {
+    width: 100%;
+    min-width: 0;
+    justify-content: flex-start;
+    padding: 12px 14px;
+    border-radius: 16px;
+    text-align: left;
+    font-size: 15px;
+    font-weight: 800;
+    color: #526070;
+  }
+  .topnav button.active {
+    background: #eaf2ff;
+    color: #185abc;
+  }
+  .main {
+    max-width: 1160px;
+    width: 100%;
+    padding: 28px 28px 52px;
+  }
+  .hero-row {
+    display: block;
+    margin: 0 0 18px;
+  }
+}
+
+.ops-strip,
+.brief-strip {
+  display: none !important;
+}
+.hero-row .eyebrow {
+  margin-bottom: 4px;
+}
+.hero-row h1 {
+  font-size: clamp(32px, 4vw, 44px);
+}
+.card,
+.day-card,
+.starter-card,
+.calendar-hero,
+.courses-hero,
+.profile-hero,
+.course-risk-strip,
+.course-detail-hero,
+.next-up-grid > div,
+.priority-item,
+.assignment-row,
+.calendar-cell,
+.calendar-event,
+.agenda-row,
+.course-select {
+  border-radius: 18px !important;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, .04) !important;
+}
+.card p,
+.day-card p,
+.next-up-grid p,
+.capture-card p,
+.priority-card p,
+.schedule-card p,
+.courses-hero p,
+.calendar-hero p,
+.profile-hero p {
+  line-height: 1.35;
+}
+.beginner-layout {
+  grid-template-columns: minmax(0, 1fr) 320px;
+}
+.metrics-row {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.metric {
+  min-width: 0;
+}
+.metric span,
+.metric strong,
+.metric small,
+.topnav button,
+.card-title-row h2,
+.card-title-row span {
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+  white-space: nowrap !important;
+}
+.capture-pills,
+.starter-steps {
+  display: none !important;
+}
+@media (max-width: 900px) {
+  .topbar {
+    width: calc(100% - 24px);
+    margin: 12px auto 0;
+    border-radius: 18px;
+  }
+  .topnav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: visible;
+  }
+  .topnav button {
+    justify-content: center;
+  }
+  .hero-row {
+    display: block;
+  }
+}
