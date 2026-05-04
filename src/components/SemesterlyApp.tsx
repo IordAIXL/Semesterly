@@ -683,96 +683,51 @@ export function SemesterlyApp() {
         <section className="hero-row">
           <div>
             <p className="eyebrow">{format(selectedDate, "EEEE, MMMM d")}</p>
-            <h1>{view === "dashboard" ? "Your day" : view === "calendar" ? "Calendar" : view === "courses" ? "Courses" : view === "profile" ? "Profile" : "Admin"}</h1>
+            <h1>{view === "dashboard" ? "Dashboard" : view === "calendar" ? "Calendar" : view === "courses" ? "Courses" : view === "profile" ? "Profile" : "Admin"}</h1>
           </div>
           {view === "dashboard" && (
             <div className="ops-strip" aria-label="Fast semester status">
-              <span>Do first</span><strong>{topTask ? topTask.title : "Nothing urgent"}</strong>
-              <span>Next time</span><strong>{nextEvent ? format(parseISO(nextEvent.startsAt), "h:mm a") : "Open"}</strong>
-              <span>Today</span><strong>{dayLoad} items</strong>
+              <span>Now</span><strong>{topTask ? topTask.title : "Clear"}</strong>
+              <span>Next</span><strong>{nextEvent ? format(parseISO(nextEvent.startsAt), "h:mm a") : "Open"}</strong>
+              <span>Load</span><strong>{dayLoad} items</strong>
             </div>
           )}
         </section>
 
         {view === "dashboard" && (
-          <section className="semester-command-layout">
-            <aside className="command-left-rail" aria-label="Semester overview">
-              <article className="card mini-month-card">
-                <div className="card-title-row"><h2>Mini month</h2><span>{format(selectedDate, "MMM")}</span></div>
-                <div className="mini-weekdays">{["M", "T", "W", "T", "F", "S", "S"].map((day) => <span key={day}>{day}</span>)}</div>
-                <div className="mini-month-grid">
-                  {Array.from({ length: 35 }, (_, index) => addDays(startOfWeek(startOfMonth(selectedDate), { weekStartsOn: 1 }), index)).map((day) => (
-                    <button key={day.toISOString()} className={`${isSameMonth(day, selectedDate) ? "" : "muted"} ${isToday(day) ? "today" : ""} ${isSameDay(day, selectedDate) ? "selected" : ""}`} onClick={() => setSelectedDate(day)}>
-                      {format(day, "d")}
-                    </button>
-                  ))}
+          <section className="dashboard-layout">
+            <div className="left-stack">
+              <article className="card day-card primary-focus-card">
+                <div className="brief-strip">
+                  <span>Start line</span>
+                  <strong>{topTask ? `Do ${topTask.title} first` : "No urgent work"}</strong>
+                  <span>{nextEvent ? `Next: ${nextEvent.title} at ${format(parseISO(nextEvent.startsAt), "h:mm a")}` : "Calendar open"}</span>
                 </div>
-              </article>
-
-              <article className="card load-panel">
-                <div className="card-title-row"><h2>Load</h2></div>
-                <div className="load-bars" aria-label="Current workload">
-                  <span style={{ height: `${Math.max(18, Math.min(92, courses.length * 18))}%` }} />
-                  <span style={{ height: `${Math.max(18, Math.min(92, activeTasks.length * 12))}%` }} />
-                  <span style={{ height: `${Math.max(18, Math.min(92, priorities.length * 18))}%` }} />
-                  <span style={{ height: `${Math.max(18, Math.min(92, completedTasks.length * 12))}%` }} />
-                </div>
-                <div className="load-list-simple">
-                  <p><span /> Classes <strong>{courses.length}</strong></p>
-                  <p><span /> Tasks <strong>{activeTasks.length}</strong></p>
-                  <p><span /> Priority <strong>{priorities.length}</strong></p>
-                </div>
-              </article>
-
-              <QuickAdd taskDraft={taskDraft} setTaskDraft={setTaskDraft} addTask={addTask} courses={courses} />
-            </aside>
-
-            <section className="schedule-stage" aria-label="Main schedule">
-              <article className="card stage-hero-card">
-                <div className="stage-heading">
+                <div className="day-card-main">
                   <div>
-                    <p className="eyebrow">{studentProfile.name} · {studentProfile.school ?? "School not set"}</p>
-                    <h2>{topTask ? "Start here, then follow the day." : "Set up your semester in minutes."}</h2>
-                    <p>{topTask ? `${topTask.title} is first because ${topTask.reason.toLowerCase()}` : "Add a course and one due date. Semesterly will turn the mess into a short daily queue."}</p>
+                    <p className="eyebrow">{studentProfile.name} · {studentProfile.school ?? "Your school"} · {studentProfile.major ?? "Your major"}</p>
+                    <h2>{dayTone} day. {topTask ? "Start here." : "You’re clear."}</h2>
+                    <p>{topTask ? `${topTask.title} is your best first move. ${topTask.reason}` : "No open priority tasks right now."}</p>
                   </div>
-                  <div className="today-orb"><span>Today</span><strong>{dayLoad}</strong></div>
+                  <div className="load-badge"><span>{dayTone}</span><strong>{dayLoad}</strong><small>items</small></div>
+                </div>
+                <div className="metrics-row">
+                  <Metric label="Courses" value={courses.length} />
+                  <Metric label="Open tasks" value={activeTasks.length} />
+                  <Metric label="Focus load" value={minutesLabel(focusMinutes)} />
+                  <Metric label="Done" value={completedTasks.length} />
                 </div>
               </article>
-
-              <article className="card schedule-canvas-card">
-                <div className="schedule-canvas-head">
-                  <h2>{todaysSchedule.length ? "Today’s path" : "Upcoming path"}</h2>
-                  <span>{nextEvent ? `Next at ${format(parseISO(nextEvent.startsAt), "h:mm a")}` : "No locked event"}</span>
-                </div>
-                <div className="schedule-river" aria-hidden="true" />
-                <div className="canvas-events">
-                  {(todaysSchedule.length ? todaysSchedule : sortedSchedule.slice(0, 6)).map((event, index) => (
-                    <div className={`canvas-event event-${index % 3}`} key={event.id}>
-                      <span className="event-color" style={{ background: eventCategoryColor(event.category) }} />
-                      <strong>{event.title}</strong>
-                      <p>{format(parseISO(event.startsAt), "h:mm a")} · {event.location ?? eventCategoryLabel(event.category)}</p>
-                    </div>
-                  ))}
-                  {!(todaysSchedule.length || sortedSchedule.length) && <p className="empty">No schedule yet. Add your first class or assignment.</p>}
-                </div>
-              </article>
-
-              <article className="card starter-card compact-starter">
-                <div className="card-title-row"><h2>First time here?</h2></div>
-                <ol className="starter-steps">
-                  <li><strong>Add classes</strong><span>Course code and meeting time are enough.</span></li>
-                  <li><strong>Add due dates</strong><span>Assignments turn into a priority list.</span></li>
-                  <li><strong>Open daily</strong><span>Do the first card, then follow the calendar.</span></li>
-                </ol>
-              </article>
-            </section>
-
-            <aside className="priority-dock" aria-label="Prioritized work">
               <PriorityCard priorities={priorities} onDone={(id) => updateTaskStatus(id, "DONE")} onStart={(id) => updateTaskStatus(id, "IN_PROGRESS")} onSnooze={snoozeTask} onDelete={deleteTask} />
+            </div>
+
+            <div className="right-stack simple-today-panel">
               <NextUpCard nextEvent={nextEvent} topTask={topTask} />
-              <SmartCaptureCard value={smartInput} setValue={setSmartInput} addSmartTask={addSmartTask} />
+              <ScheduleCard schedule={todaysSchedule.length ? todaysSchedule : sortedSchedule.slice(0, 4)} courses={courses} title={todaysSchedule.length ? "Today’s schedule" : "Upcoming schedule"} />
               {focusBreaksEnabled && <StudyTimerCard tasks={priorities} breakMinutes={focusBreakMinutes} />}
-            </aside>
+              <SmartCaptureCard value={smartInput} setValue={setSmartInput} addSmartTask={addSmartTask} />
+              <QuickAdd taskDraft={taskDraft} setTaskDraft={setTaskDraft} addTask={addTask} courses={courses} />
+            </div>
           </section>
         )}
 
@@ -1202,51 +1157,37 @@ function CalendarPage({
     : schedule.filter((event) => visibleDays.some((day) => isSameDay(parseISO(event.startsAt), day)));
 
   return (
-    <section className="calendar-page calendar-workbench">
-      <aside className="calendar-left-panel" aria-label="Calendar navigation">
-        <article className="card mini-month-card calendar-mini-month">
-          <div className="card-title-row"><h2>{format(selectedDate, "MMMM")}</h2><span>{format(selectedDate, "yyyy")}</span></div>
-          <div className="mini-weekdays">{["M", "T", "W", "T", "F", "S", "S"].map((day) => <span key={day}>{day}</span>)}</div>
-          <div className="mini-month-grid">
-            {monthDays.slice(0, 35).map((day) => (
-              <button key={day.toISOString()} className={`${isSameMonth(day, selectedDate) ? "" : "muted"} ${isToday(day) ? "today" : ""} ${isSameDay(day, selectedDate) ? "selected" : ""}`} onClick={() => setSelectedDate(day)}>
-                {format(day, "d")}
-              </button>
-            ))}
-          </div>
-        </article>
-
-        <article className="card calendar-mode-card">
-          <div className="card-title-row"><h2>View</h2></div>
-          <div className="calendar-tabs vertical" role="tablist" aria-label="Calendar view">
+    <section className="calendar-page">
+      <article className="card calendar-hero">
+        <div>
+          <p className="eyebrow">Calendar</p>
+          <h2>{mode === "semester" ? `${format(selectedDate, "MMM yyyy")} semester` : format(selectedDate, mode === "month" ? "MMMM yyyy" : "EEEE, MMMM d")}</h2>
+        </div>
+        <div className="calendar-controls">
+          {mode === "day" && (
+            <div className="calendar-day-controls" aria-label="Day navigation">
+              <button onClick={() => setSelectedDate((date) => addDays(date, -1))}>Back</button>
+              <button onClick={() => setSelectedDate((date) => addDays(date, 1))}>Next</button>
+            </div>
+          )}
+          <div className="calendar-tabs" role="tablist" aria-label="Calendar view">
             {(["day", "week", "month", "semester"] as CalendarMode[]).map((item) => (
               <button key={item} className={mode === item ? "active" : ""} onClick={() => setMode(item)}>{item[0].toUpperCase() + item.slice(1)}</button>
             ))}
           </div>
-        </article>
-      </aside>
+        </div>
+      </article>
 
-      <section className="calendar-main-stage">
-        <article className="calendar-stage-header">
-          <div>
-            <p className="eyebrow">Calendar</p>
-            <h2>{mode === "semester" ? `${format(selectedDate, "MMM yyyy")} semester` : format(selectedDate, mode === "month" ? "MMMM yyyy" : "EEEE, MMMM d")}</h2>
-          </div>
-          {mode === "day" && (
-            <div className="calendar-day-controls" aria-label="Day navigation">
-              <button onClick={() => setSelectedDate((date) => addDays(date, -1))}>← Prev</button>
-              <button onClick={() => setSelectedDate((date) => addDays(date, 1))}>Next →</button>
-            </div>
-          )}
-        </article>
-
-        {mode === "semester" ? (
-          <article className="card semester-stream-card">
-            <div className="card-title-row"><h2>Full semester stream</h2></div>
+      {mode === "semester" ? (
+        <section className="calendar-semester">
+          <article className="card">
+            <div className="card-title-row"><h2>Full semester</h2></div>
             <CalendarAgenda events={schedule} courses={courses} groupByMonth />
           </article>
-        ) : (
-          <article className="card calendar-board calendar-board-stage">
+        </section>
+      ) : (
+        <section className={mode === "day" ? "calendar-layout day" : "calendar-layout"}>
+          <article className="card calendar-board">
             <div className="calendar-grid-head">
               {(mode === "day" ? [selectedDate] : Array.from({ length: 7 }, (_, index) => addDays(startOfWeek(selectedDate), index))).map((day) => (
                 <div key={day.toISOString()}>{format(day, "EEE")}</div>
@@ -1259,28 +1200,30 @@ function CalendarPage({
                   <div className={`calendar-cell ${isToday(day) ? "today" : ""} ${mode === "month" && !isSameMonth(day, selectedDate) ? "muted" : ""}`} key={day.toISOString()} onClick={() => setSelectedDate(day)}>
                     <div className="calendar-date"><strong>{format(day, "d")}</strong><span>{format(day, "MMM")}</span></div>
                     <div className="calendar-events">
-                      {dayEvents.map((event) => (
-                        <div className="calendar-event" key={event.id}>
-                          <span className="event-color" style={{ background: eventCategoryColor(event.category) }} />
-                          <div><strong>{event.title}</strong><p>{format(parseISO(event.startsAt), "h:mm a")} · {event.location ?? eventCategoryLabel(event.category)}</p></div>
-                        </div>
-                      ))}
+                      {dayEvents.map((event) => {
+                        return (
+                          <div className="calendar-event" key={event.id}>
+                            <span className="event-color" style={{ background: eventCategoryColor(event.category) }} />
+                            <div><strong>{event.title}</strong><p>{format(parseISO(event.startsAt), "h:mm a")} · {event.location ?? eventCategoryLabel(event.category)}</p></div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 );
               })}
             </div>
           </article>
-        )}
-      </section>
 
-      <aside className="calendar-right-panel" aria-label="Calendar actions">
-        <EventForm eventDraft={eventDraft} setEventDraft={setEventDraft} addEvent={addEvent} courses={courses} />
-        <article className="card agenda-dock-card">
-          <div className="card-title-row"><h2>{mode[0].toUpperCase() + mode.slice(1)} agenda</h2></div>
-          <CalendarAgenda events={visibleEvents} courses={courses} />
-        </article>
-      </aside>
+          <div className="right-stack">
+            <EventForm eventDraft={eventDraft} setEventDraft={setEventDraft} addEvent={addEvent} courses={courses} />
+            <article className="card">
+              <div className="card-title-row"><h2>{mode[0].toUpperCase() + mode.slice(1)} agenda</h2></div>
+              <CalendarAgenda events={visibleEvents} courses={courses} />
+            </article>
+          </div>
+        </section>
+      )}
     </section>
   );
 }
