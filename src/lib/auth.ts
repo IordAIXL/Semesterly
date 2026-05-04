@@ -125,13 +125,13 @@ export function isAuthResponse(value: AuthUser | NextResponse): value is NextRes
   return value instanceof NextResponse;
 }
 
-export function setSessionCookie(response: NextResponse, token: string) {
+export function setSessionCookie(response: NextResponse, token: string, maxAgeSeconds = 60 * 60 * 8) {
   response.cookies.set(SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge: 60 * 60 * 8,
+    maxAge: maxAgeSeconds,
   });
 }
 

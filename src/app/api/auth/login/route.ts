@@ -10,13 +10,17 @@ export async function POST(request: NextRequest) {
 
   if (!email || !password) return NextResponse.json({ error: "Email and password required" }, { status: 400 });
 
-  const user = await prisma.user.findUnique({ where: { email } });
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true, name: true, email: true, passwordHash: true, role: true },
+  });
   if (!user || !verifyPassword(password, user.passwordHash)) {
     return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
   }
 
-  const token = createSessionToken({ userId: user.id, role: user.role }, 60 * 60 * 8);
+  const rememberedSessionSeconds = 60 * 60 * 24 * 30;
+  const token = createSessionToken({ userId: user.id, role: user.role }, rememberedSessionSeconds);
   const response = NextResponse.json({ ok: true, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
-  setSessionCookie(response, token);
+  setSessionCookie(response, token, rememberedSessionSeconds);
   return response;
 }

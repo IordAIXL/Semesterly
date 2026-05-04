@@ -67,6 +67,7 @@ type StudentProfile = {
 };
 
 const STORAGE_KEY = "semesterly.mvp.state.v2";
+const AUTH_EMAIL_KEY = "semesterly.auth.email";
 const today = new Date();
 const isoDate = format(today, "yyyy-MM-dd");
 
@@ -212,6 +213,8 @@ export function SemesterlyApp() {
   }, [theme]);
 
   useEffect(() => {
+    const rememberedEmail = window.localStorage.getItem(AUTH_EMAIL_KEY);
+    if (rememberedEmail) setLoginEmail(rememberedEmail);
     void loadInitialWorkspace();
   }, []);
 
@@ -635,6 +638,7 @@ export function SemesterlyApp() {
       applyApiStudent(meBody.user);
       setDataMode("api");
       setLoaded(true);
+      window.localStorage.setItem(AUTH_EMAIL_KEY, loginEmail.trim().toLowerCase());
       setAuthNotice(`Signed in as ${loginBody.user.name}.`);
       setActionNotice("Signed in with a secure private account.");
       setView(meBody.user.courses.length ? "dashboard" : "courses");
@@ -662,6 +666,7 @@ export function SemesterlyApp() {
       applyApiStudent(meBody.user);
       setDataMode("api");
       setLoaded(true);
+      window.localStorage.setItem(AUTH_EMAIL_KEY, loginEmail.trim().toLowerCase());
       setAuthNotice(`Created account for ${registerBody.user.name}.`);
       setActionNotice("Private account created. Add your first course to start Semesterly.");
       setView("courses");
@@ -902,24 +907,24 @@ function AccountGate({
   return (
     <div className={`app-frame account-gate-frame ${theme === "dark" ? "theme-dark" : ""}`}>
       <main className="account-gate">
-        <section className="card account-card" aria-label="Sign in or create account">
+        <form className="card account-card" aria-label="Sign in or create account" onSubmit={(event) => { event.preventDefault(); void (isSignin ? loginWithPassword() : createAccount()); }}>
           <div className="brand account-brand"><span className="brand-mark">S</span> Semesterly</div>
           <div className="auth-card-copy">
             <p className="eyebrow">Private student workspace</p>
             <h1>{isSignin ? "Sign in" : "Create account"}</h1>
-            <p className="subtitle">{isSignin ? "Use your email and password. No extra account setup fields." : "Create a private workspace for your courses, assignments, and schedule."}</p>
+            <p className="subtitle">{isSignin ? "Use your saved email and browser password manager. No create-account fields here." : "Create a private workspace for your courses, assignments, and schedule."}</p>
           </div>
           <div className="auth-mode-tabs" role="tablist" aria-label="Account action">
             <button className={!isSignin ? "active" : ""} type="button" onClick={() => setAuthMode("create")}>Create account</button>
             <button className={isSignin ? "active" : ""} type="button" onClick={() => setAuthMode("signin")}>Sign in</button>
           </div>
-          {!isSignin && <label className="setting-row"><span>Name</span><input value={signupName} onChange={(event) => setSignupName(event.target.value)} placeholder="Your name" type="text" /></label>}
-          <label className="setting-row"><span>Email</span><input value={loginEmail} onChange={(event) => setLoginEmail(event.target.value)} placeholder="you@example.com" type="email" /></label>
-          <label className="setting-row"><span>Password</span><input value={loginPassword} onChange={(event) => setLoginPassword(event.target.value)} placeholder={isSignin ? "Password" : "At least 8 characters"} type="password" /></label>
-          <button className="primary-button" onClick={isSignin ? loginWithPassword : createAccount}>{isSignin ? "Sign in" : "Create private account"}</button>
+          {!isSignin && <label className="setting-row"><span>Name</span><input autoComplete="name" name="name" value={signupName} onChange={(event) => setSignupName(event.target.value)} placeholder="Your name" type="text" /></label>}
+          <label className="setting-row"><span>Email</span><input autoComplete="email" name="email" value={loginEmail} onChange={(event) => setLoginEmail(event.target.value)} placeholder="you@example.com" type="email" /></label>
+          <label className="setting-row"><span>Password</span><input autoComplete={isSignin ? "current-password" : "new-password"} name={isSignin ? "current-password" : "new-password"} value={loginPassword} onChange={(event) => setLoginPassword(event.target.value)} placeholder={isSignin ? "Password" : "At least 8 characters"} type="password" /></label>
+          <button className="primary-button" type="submit">{isSignin ? "Sign in" : "Create private account"}</button>
           <button className="ghost-button full-width auth-switch-button" type="button" onClick={() => setAuthMode(isSignin ? "create" : "signin")}>{isSignin ? "Need an account? Create one" : "Already have an account? Sign in"}</button>
           {authNotice && <p className="fine-print">{authNotice}</p>}
-        </section>
+        </form>
       </main>
     </div>
   );

@@ -33,8 +33,9 @@ export async function POST(request: NextRequest) {
     select: { id: true, name: true, email: true, role: true },
   });
 
-  const token = createSessionToken({ userId: user.id, role: user.role }, 60 * 60 * 8);
+  const rememberedSessionSeconds = 60 * 60 * 24 * 30;
+  const token = createSessionToken({ userId: user.id, role: user.role }, rememberedSessionSeconds);
   const response = NextResponse.json({ ok: true, user }, { status: 201 });
-  setSessionCookie(response, token);
+  setSessionCookie(response, token, rememberedSessionSeconds);
   return response;
 }
