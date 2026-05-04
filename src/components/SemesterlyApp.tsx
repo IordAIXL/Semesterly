@@ -683,50 +683,60 @@ export function SemesterlyApp() {
         <section className="hero-row">
           <div>
             <p className="eyebrow">{format(selectedDate, "EEEE, MMMM d")}</p>
-            <h1>{view === "dashboard" ? "Dashboard" : view === "calendar" ? "Calendar" : view === "courses" ? "Courses" : view === "profile" ? "Profile" : "Admin"}</h1>
+            <h1>{view === "dashboard" ? "Your day" : view === "calendar" ? "Calendar" : view === "courses" ? "Courses" : view === "profile" ? "Profile" : "Admin"}</h1>
           </div>
           {view === "dashboard" && (
             <div className="ops-strip" aria-label="Fast semester status">
-              <span>Now</span><strong>{topTask ? topTask.title : "Clear"}</strong>
-              <span>Next</span><strong>{nextEvent ? format(parseISO(nextEvent.startsAt), "h:mm a") : "Open"}</strong>
-              <span>Load</span><strong>{dayLoad} items</strong>
+              <span>Do first</span><strong>{topTask ? topTask.title : "Nothing urgent"}</strong>
+              <span>Next time</span><strong>{nextEvent ? format(parseISO(nextEvent.startsAt), "h:mm a") : "Open"}</strong>
+              <span>Today</span><strong>{dayLoad} items</strong>
             </div>
           )}
         </section>
 
         {view === "dashboard" && (
-          <section className="dashboard-layout">
-            <div className="left-stack">
+          <section className="dashboard-layout beginner-layout">
+            <div className="left-stack main-flow">
               <article className="card day-card primary-focus-card">
                 <div className="brief-strip">
-                  <span>Start line</span>
-                  <strong>{topTask ? `Do ${topTask.title} first` : "No urgent work"}</strong>
-                  <span>{nextEvent ? `Next: ${nextEvent.title} at ${format(parseISO(nextEvent.startsAt), "h:mm a")}` : "Calendar open"}</span>
+                  <span>Step 1</span>
+                  <strong>{topTask ? `Start: ${topTask.title}` : "Check your calendar, then add work"}</strong>
+                  <span>{nextEvent ? `Next class/event: ${nextEvent.title} at ${format(parseISO(nextEvent.startsAt), "h:mm a")}` : "No event blocking you"}</span>
                 </div>
                 <div className="day-card-main">
                   <div>
-                    <p className="eyebrow">{studentProfile.name} · {studentProfile.school ?? "Your school"} · {studentProfile.major ?? "Your major"}</p>
-                    <h2>{dayTone} day. {topTask ? "Start here." : "You’re clear."}</h2>
-                    <p>{topTask ? `${topTask.title} is your best first move. ${topTask.reason}` : "No open priority tasks right now."}</p>
+                    <p className="eyebrow">{studentProfile.name} · {studentProfile.school ?? "School not set"}</p>
+                    <h2>{topTask ? "One thing first. Then the rest." : "Start simple: add classes or assignments."}</h2>
+                    <p>{topTask ? `${topTask.reason} Semesterly keeps the queue short so you do not have to decode a giant dashboard.` : "A new student should know what to tap first: add a course, add a due date, or check the next calendar item."}</p>
                   </div>
-                  <div className="load-badge"><span>{dayTone}</span><strong>{dayLoad}</strong><small>items</small></div>
+                  <div className="load-badge"><span>Today</span><strong>{dayLoad}</strong><small>items</small></div>
                 </div>
                 <div className="metrics-row">
-                  <Metric label="Courses" value={courses.length} />
-                  <Metric label="Open tasks" value={activeTasks.length} />
-                  <Metric label="Focus load" value={minutesLabel(focusMinutes)} />
-                  <Metric label="Done" value={completedTasks.length} />
+                  <Metric label="Classes" value={courses.length} />
+                  <Metric label="Need doing" value={activeTasks.length} />
+                  <Metric label="Time estimate" value={minutesLabel(focusMinutes)} />
+                  <Metric label="Finished" value={completedTasks.length} />
                 </div>
               </article>
-              <PriorityCard priorities={priorities} onDone={(id) => updateTaskStatus(id, "DONE")} onStart={(id) => updateTaskStatus(id, "IN_PROGRESS")} onSnooze={snoozeTask} onDelete={deleteTask} />
+
+              <article className="card starter-card">
+                <div className="card-title-row"><h2>If you are new, use it like this</h2></div>
+                <ol className="starter-steps">
+                  <li><strong>Add your courses</strong><span>Only course name/code first. Details can come later.</span></li>
+                  <li><strong>Put in due dates</strong><span>Assignments and exams become the priority queue.</span></li>
+                  <li><strong>Open this page daily</strong><span>Do the first item, then check the next calendar block.</span></li>
+                </ol>
+              </article>
+
+              <ScheduleCard schedule={todaysSchedule.length ? todaysSchedule : sortedSchedule.slice(0, 5)} courses={courses} title={todaysSchedule.length ? "Today, in order" : "Next calendar items"} />
+              <NextUpCard nextEvent={nextEvent} topTask={topTask} />
             </div>
 
-            <div className="right-stack simple-today-panel">
-              <NextUpCard nextEvent={nextEvent} topTask={topTask} />
-              <ScheduleCard schedule={todaysSchedule.length ? todaysSchedule : sortedSchedule.slice(0, 4)} courses={courses} title={todaysSchedule.length ? "Today’s schedule" : "Upcoming schedule"} />
-              {focusBreaksEnabled && <StudyTimerCard tasks={priorities} breakMinutes={focusBreakMinutes} />}
-              <SmartCaptureCard value={smartInput} setValue={setSmartInput} addSmartTask={addSmartTask} />
+            <div className="right-stack action-rail">
               <QuickAdd taskDraft={taskDraft} setTaskDraft={setTaskDraft} addTask={addTask} courses={courses} />
+              <SmartCaptureCard value={smartInput} setValue={setSmartInput} addSmartTask={addSmartTask} />
+              <PriorityCard priorities={priorities} onDone={(id) => updateTaskStatus(id, "DONE")} onStart={(id) => updateTaskStatus(id, "IN_PROGRESS")} onSnooze={snoozeTask} onDelete={deleteTask} />
+              {focusBreaksEnabled && <StudyTimerCard tasks={priorities} breakMinutes={focusBreakMinutes} />}
             </div>
           </section>
         )}
