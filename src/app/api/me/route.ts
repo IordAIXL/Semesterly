@@ -14,7 +14,6 @@ const workspaceSelect = {
   createdAt: true,
   courses: { include: { meetings: true } },
   tasks: { orderBy: { dueAt: "asc" } },
-  events: { orderBy: { startsAt: "asc" } },
 } as const;
 
 async function getScheduleCategories(userId: string) {
@@ -27,13 +26,28 @@ async function getScheduleCategories(userId: string) {
   }
 }
 
+async function getEvents(userId: string) {
+  return prisma.$queryRaw<Array<{
+    id: string;
+    userId: string;
+    courseId: string | null;
+    title: string;
+    startsAt: Date;
+    endsAt: Date;
+    location: string | null;
+    category: string;
+    source: string;
+  }>>`SELECT id, "userId", "courseId", title, "startsAt", "endsAt", location, category::text AS category, source FROM "Event" WHERE "userId" = ${userId} ORDER BY "startsAt" ASC`;
+}
+
 async function getWorkspaceUser(userId: string) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: workspaceSelect,
   });
   if (!user) return null;
-  return { ...user, scheduleCategories: await getScheduleCategories(userId) };
+  const [scheduleCategories, events] = await Promise.all([getScheduleCategories(userId), getEvents(userId)]);
+  return { ...user, scheduleCategories, events };
 }
 
 export async function GET(request: NextRequest) {
