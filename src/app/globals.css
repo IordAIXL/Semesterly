@@ -3163,3 +3163,214 @@ button,
   .starter-card,
   .focus-timer-card { display: none !important; }
 }
+
+/* Courses page fit fix: do not let the Add modal or course cards exceed the viewport. */
+@media (min-width: 901px) {
+  .main > .courses-page {
+    display: grid !important;
+    grid-template-rows: auto minmax(0, 1fr) !important;
+    gap: 8px !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+  .courses-page .course-action-strip {
+    min-height: 0 !important;
+    padding: 6px 8px !important;
+  }
+  .courses-page .course-action-strip h2 {
+    font-size: 15px !important;
+  }
+  .courses-page .course-action-strip p {
+    display: none !important;
+  }
+  .courses-page .courses-layout {
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    grid-template-columns: 150px minmax(0, 1fr) !important;
+    gap: 8px !important;
+  }
+  .courses-page .course-sidebar {
+    width: 150px !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    overflow: hidden !important;
+    gap: 5px !important;
+  }
+  .courses-page .course-select {
+    min-height: 0 !important;
+    height: 48px !important;
+    padding: 6px !important;
+    grid-template-columns: 8px minmax(0, 1fr) !important;
+    column-gap: 6px !important;
+    overflow: hidden !important;
+  }
+  .courses-page .course-select strong,
+  .courses-page .course-select small {
+    min-width: 0 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+  .courses-page .course-select small {
+    font-size: 11px !important;
+  }
+  .courses-page .course-detail {
+    display: grid !important;
+    grid-template-rows: auto minmax(0, 1fr) !important;
+    gap: 8px !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+  .courses-page .course-detail-hero {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 236px !important;
+    gap: 8px !important;
+    align-items: center !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-height: 86px !important;
+    overflow: hidden !important;
+    padding: 8px !important;
+  }
+  .courses-page .course-detail-hero h2 {
+    font-size: 18px !important;
+    line-height: 1.05 !important;
+    margin: 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  .courses-page .course-detail-hero p {
+    margin: 3px 0 0 !important;
+    font-size: 12px !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  .courses-page .course-detail-hero .metrics-row {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 5px !important;
+  }
+  .courses-page .course-detail-hero .metric {
+    min-height: 52px !important;
+    padding: 5px !important;
+    align-content: center !important;
+  }
+  .courses-page .course-detail-hero .metric strong {
+    font-size: 18px !important;
+    line-height: 1 !important;
+  }
+  .courses-page .course-detail-hero .metric span {
+    font-size: 10px !important;
+  }
+  .courses-page .course-subgrid {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, .68fr) !important;
+    grid-template-rows: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+  .courses-page .course-subgrid > .card {
+    min-width: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    padding: 8px !important;
+  }
+  .courses-page .course-subgrid .card-title-row {
+    margin-bottom: 6px !important;
+  }
+  .courses-page .course-subgrid .card-title-row h2 {
+    font-size: 15px !important;
+  }
+  .courses-page .course-subgrid .list-stack,
+  .courses-page .course-subgrid .calendar-agenda,
+  .courses-page .course-subgrid .trust-list {
+    min-height: 0 !important;
+    max-height: calc(100% - 26px) !important;
+    overflow: hidden !important;
+    gap: 6px !important;
+  }
+  .courses-page .course-subgrid .assignment-row,
+  .courses-page .course-subgrid .agenda-row {
+    padding: 7px !important;
+  }
+  .courses-page .course-subgrid .assignment-row strong,
+  .courses-page .course-subgrid .agenda-row strong,
+  .courses-page .course-subgrid .trust-list strong {
+    font-size: 13px !important;
+  }
+  .courses-page .course-subgrid .assignment-row span,
+  .courses-page .course-subgrid .agenda-row p,
+  .courses-page .course-subgrid .trust-list span {
+    font-size: 11px !important;
+    line-height: 1.18 !important;
+  }
+  .courses-add-modal[data-open="true"] .add-menu,
+  .courses-add-modal.is-open .add-menu,
+  .courses-add-modal[open] .add-menu {
+    top: 34px !important;
+    width: min(460px, calc(100vw - 200px)) !important;
+    max-width: min(460px, calc(100vw - 200px)) !important;
+    max-height: calc(100vh - 48px) !important;
+    overflow: hidden !important;
+    padding: 8px !important;
+    gap: 7px !important;
+  }
+  .courses-add-modal .add-tabs {
+    gap: 5px !important;
+  }
+  .courses-add-modal .add-tabs button {
+    min-height: 30px !important;
+    padding: 6px 8px !important;
+    font-size: 12px !important;
+  }
+  .courses-add-modal .add-menu .card {
+    padding: 8px !important;
+    gap: 7px !important;
+  }
+  .courses-add-modal .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+  .courses-add-modal .form-grid label,
+  .courses-add-modal .setting-row {
+    gap: 3px !important;
+    font-size: 11px !important;
+  }
+  .courses-add-modal .form-grid input,
+  .courses-add-modal .form-grid select,
+  .courses-add-modal textarea {
+    min-height: 30px !important;
+    padding: 6px 8px !important;
+    font-size: 12px !important;
+  }
+  .courses-add-modal textarea {
+    min-height: 56px !important;
+    resize: none !important;
+  }
+  .courses-add-modal .file-upload-control {
+    min-height: 46px !important;
+    padding: 8px !important;
+    font-size: 12px !important;
+  }
+  .courses-add-modal .upload-note,
+  .courses-add-modal .muted-copy,
+  .courses-add-modal .card p {
+    display: none !important;
+  }
+}
