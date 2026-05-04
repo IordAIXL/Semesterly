@@ -2914,3 +2914,47 @@ button,
     gap: 14px;
   }
 }
+
+/* Courses fullscreen Add menu: portal above every page/card stacking context. */
+.add-portal {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483640;
+  pointer-events: none;
+}
+.add-portal .add-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483641 !important;
+  border: 0 !important;
+  background: rgba(15, 23, 42, .20) !important;
+  cursor: default !important;
+  pointer-events: auto !important;
+}
+.add-portal .add-menu {
+  position: fixed !important;
+  top: 64px !important;
+  left: 50% !important;
+  right: auto !important;
+  transform: translateX(-50%) !important;
+  width: min(740px, calc(100vw - 28px)) !important;
+  max-height: calc(100vh - 88px) !important;
+  overflow: auto !important;
+  z-index: 2147483642 !important;
+  pointer-events: auto !important;
+  display: grid !important;
+  gap: 12px !important;
+  padding: 14px !important;
+  border: 1px solid #d7dee8 !important;
+  border-radius: 18px !important;
+  background: var(--surface) !important;
+  color: var(--ink) !important;
+  box-shadow: 0 34px 90px rgba(15, 23, 42, .38) !important;
+}
+@media (max-width: 760px) {
+  .add-portal .add-menu {
+    top: 56px !important;
+    width: calc(100vw - 18px) !important;
+    max-height: calc(100vh - 68px) !important;
+  }
+}
