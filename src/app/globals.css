@@ -2587,3 +2587,57 @@ button,
     padding: 18px !important;
   }
 }
+
+/* First-run login: single readable card, no overlapping marketing panel. */
+.account-gate-frame.app-frame {
+  grid-template-columns: 1fr !important;
+}
+.account-gate-frame .account-gate {
+  width: min(520px, 100%) !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+.account-gate-frame .account-gate-copy {
+  display: none !important;
+}
+.account-gate-frame .auth-card-copy {
+  display: grid !important;
+  gap: 6px !important;
+}
+.account-gate-frame .account-brand {
+  margin-bottom: 4px !important;
+  color: #111827 !important;
+}
+.account-gate-frame .auth-card-copy h1 {
+  margin: 0 !important;
+  font-size: clamp(30px, 6vw, 40px) !important;
+  line-height: 1.05 !important;
+  letter-spacing: -.04em !important;
+  color: #111827 !important;
+  white-space: normal !important;
+}
+.account-gate-frame .auth-card-copy .subtitle {
+  margin: 0 !important;
+  color: #4b5563 !important;
+  font-size: 15px !important;
+}
+.account-gate-frame .setting-row {
+  color: #475569 !important;
+  font-size: 14px !important;
+}
+.account-gate-frame .account-card {
+  position: static !important;
+  width: 100% !important;
+  max-width: 520px !important;
+}
+:root[data-theme="dark"] .account-gate-frame .account-brand,
+.account-gate-frame.theme-dark .account-brand,
+:root[data-theme="dark"] .account-gate-frame .auth-card-copy h1,
+.account-gate-frame.theme-dark .auth-card-copy h1 {
+  color: #f8fafc !important;
+}
+:root[data-theme="dark"] .account-gate-frame .auth-card-copy .subtitle,
+.account-gate-frame.theme-dark .auth-card-copy .subtitle {
+  color: #b6c2cf !important;
+}
