@@ -695,49 +695,84 @@ export function SemesterlyApp() {
         </section>
 
         {view === "dashboard" && (
-          <section className="dashboard-layout beginner-layout">
-            <div className="left-stack main-flow">
-              <article className="card day-card primary-focus-card">
-                <div className="brief-strip">
-                  <span>Step 1</span>
-                  <strong>{topTask ? `Start: ${topTask.title}` : "Check your calendar, then add work"}</strong>
-                  <span>{nextEvent ? `Next class/event: ${nextEvent.title} at ${format(parseISO(nextEvent.startsAt), "h:mm a")}` : "No event blocking you"}</span>
+          <section className="semester-command-layout">
+            <aside className="command-left-rail" aria-label="Semester overview">
+              <article className="card mini-month-card">
+                <div className="card-title-row"><h2>Mini month</h2><span>{format(selectedDate, "MMM")}</span></div>
+                <div className="mini-weekdays">{["M", "T", "W", "T", "F", "S", "S"].map((day) => <span key={day}>{day}</span>)}</div>
+                <div className="mini-month-grid">
+                  {Array.from({ length: 35 }, (_, index) => addDays(startOfWeek(startOfMonth(selectedDate), { weekStartsOn: 1 }), index)).map((day) => (
+                    <button key={day.toISOString()} className={`${isSameMonth(day, selectedDate) ? "" : "muted"} ${isToday(day) ? "today" : ""} ${isSameDay(day, selectedDate) ? "selected" : ""}`} onClick={() => setSelectedDate(day)}>
+                      {format(day, "d")}
+                    </button>
+                  ))}
                 </div>
-                <div className="day-card-main">
+              </article>
+
+              <article className="card load-panel">
+                <div className="card-title-row"><h2>Load</h2></div>
+                <div className="load-bars" aria-label="Current workload">
+                  <span style={{ height: `${Math.max(18, Math.min(92, courses.length * 18))}%` }} />
+                  <span style={{ height: `${Math.max(18, Math.min(92, activeTasks.length * 12))}%` }} />
+                  <span style={{ height: `${Math.max(18, Math.min(92, priorities.length * 18))}%` }} />
+                  <span style={{ height: `${Math.max(18, Math.min(92, completedTasks.length * 12))}%` }} />
+                </div>
+                <div className="load-list-simple">
+                  <p><span /> Classes <strong>{courses.length}</strong></p>
+                  <p><span /> Tasks <strong>{activeTasks.length}</strong></p>
+                  <p><span /> Priority <strong>{priorities.length}</strong></p>
+                </div>
+              </article>
+
+              <QuickAdd taskDraft={taskDraft} setTaskDraft={setTaskDraft} addTask={addTask} courses={courses} />
+            </aside>
+
+            <section className="schedule-stage" aria-label="Main schedule">
+              <article className="card stage-hero-card">
+                <div className="stage-heading">
                   <div>
                     <p className="eyebrow">{studentProfile.name} · {studentProfile.school ?? "School not set"}</p>
-                    <h2>{topTask ? "One thing first. Then the rest." : "Start simple: add classes or assignments."}</h2>
-                    <p>{topTask ? `${topTask.reason} Semesterly keeps the queue short so you do not have to decode a giant dashboard.` : "A new student should know what to tap first: add a course, add a due date, or check the next calendar item."}</p>
+                    <h2>{topTask ? "Start here, then follow the day." : "Set up your semester in minutes."}</h2>
+                    <p>{topTask ? `${topTask.title} is first because ${topTask.reason.toLowerCase()}` : "Add a course and one due date. Semesterly will turn the mess into a short daily queue."}</p>
                   </div>
-                  <div className="load-badge"><span>Today</span><strong>{dayLoad}</strong><small>items</small></div>
-                </div>
-                <div className="metrics-row">
-                  <Metric label="Classes" value={courses.length} />
-                  <Metric label="Need doing" value={activeTasks.length} />
-                  <Metric label="Time estimate" value={minutesLabel(focusMinutes)} />
-                  <Metric label="Finished" value={completedTasks.length} />
+                  <div className="today-orb"><span>Today</span><strong>{dayLoad}</strong></div>
                 </div>
               </article>
 
-              <article className="card starter-card">
-                <div className="card-title-row"><h2>If you are new, use it like this</h2></div>
+              <article className="card schedule-canvas-card">
+                <div className="schedule-canvas-head">
+                  <h2>{todaysSchedule.length ? "Today’s path" : "Upcoming path"}</h2>
+                  <span>{nextEvent ? `Next at ${format(parseISO(nextEvent.startsAt), "h:mm a")}` : "No locked event"}</span>
+                </div>
+                <div className="schedule-river" aria-hidden="true" />
+                <div className="canvas-events">
+                  {(todaysSchedule.length ? todaysSchedule : sortedSchedule.slice(0, 6)).map((event, index) => (
+                    <div className={`canvas-event event-${index % 3}`} key={event.id}>
+                      <span className="event-color" style={{ background: eventCategoryColor(event.category) }} />
+                      <strong>{event.title}</strong>
+                      <p>{format(parseISO(event.startsAt), "h:mm a")} · {event.location ?? eventCategoryLabel(event.category)}</p>
+                    </div>
+                  ))}
+                  {!(todaysSchedule.length || sortedSchedule.length) && <p className="empty">No schedule yet. Add your first class or assignment.</p>}
+                </div>
+              </article>
+
+              <article className="card starter-card compact-starter">
+                <div className="card-title-row"><h2>First time here?</h2></div>
                 <ol className="starter-steps">
-                  <li><strong>Add your courses</strong><span>Only course name/code first. Details can come later.</span></li>
-                  <li><strong>Put in due dates</strong><span>Assignments and exams become the priority queue.</span></li>
-                  <li><strong>Open this page daily</strong><span>Do the first item, then check the next calendar block.</span></li>
+                  <li><strong>Add classes</strong><span>Course code and meeting time are enough.</span></li>
+                  <li><strong>Add due dates</strong><span>Assignments turn into a priority list.</span></li>
+                  <li><strong>Open daily</strong><span>Do the first card, then follow the calendar.</span></li>
                 </ol>
               </article>
+            </section>
 
-              <ScheduleCard schedule={todaysSchedule.length ? todaysSchedule : sortedSchedule.slice(0, 5)} courses={courses} title={todaysSchedule.length ? "Today, in order" : "Next calendar items"} />
-              <NextUpCard nextEvent={nextEvent} topTask={topTask} />
-            </div>
-
-            <div className="right-stack action-rail">
-              <QuickAdd taskDraft={taskDraft} setTaskDraft={setTaskDraft} addTask={addTask} courses={courses} />
-              <SmartCaptureCard value={smartInput} setValue={setSmartInput} addSmartTask={addSmartTask} />
+            <aside className="priority-dock" aria-label="Prioritized work">
               <PriorityCard priorities={priorities} onDone={(id) => updateTaskStatus(id, "DONE")} onStart={(id) => updateTaskStatus(id, "IN_PROGRESS")} onSnooze={snoozeTask} onDelete={deleteTask} />
+              <NextUpCard nextEvent={nextEvent} topTask={topTask} />
+              <SmartCaptureCard value={smartInput} setValue={setSmartInput} addSmartTask={addSmartTask} />
               {focusBreaksEnabled && <StudyTimerCard tasks={priorities} breakMinutes={focusBreakMinutes} />}
-            </div>
+            </aside>
           </section>
         )}
 
