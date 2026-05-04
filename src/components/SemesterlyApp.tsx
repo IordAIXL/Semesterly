@@ -1,7 +1,7 @@
 "use client";
 
 import { addDays, differenceInCalendarDays, endOfMonth, endOfWeek, format, isSameDay, isSameMonth, isToday, parseISO, startOfMonth, startOfWeek } from "date-fns";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { allSampleStudents, defaultStudent } from "@/lib/sample-users";
 import { parseTaskInput } from "@/lib/natural-language";
 import { prioritizeTasks } from "@/lib/priority";
@@ -211,7 +211,9 @@ export function SemesterlyApp() {
   const dueSoon = [...activeTasks]
     .sort((a, b) => a.dueAt.localeCompare(b.dueAt))
     .slice(0, 5);
-  const upcomingEvents = sortedSchedule.filter((event) => parseISO(event.endsAt) > new Date()).slice(0, 5);
+  const upcomingEvents = sortedSchedule
+    .filter((event) => parseISO(event.endsAt) > new Date() && !isSameDay(parseISO(event.startsAt), selectedDate))
+    .slice(0, 5);
   const focusPlan = priorities.slice(0, 3);
   const recommendations = buildRecommendations(tasks, courses);
   const weekMinutes = activeTasks.reduce((sum, task) => sum + task.estimatedMinutes, 0);
@@ -685,29 +687,33 @@ export function SemesterlyApp() {
         {view === "dashboard" && (
           <section className="dashboard-layout beginner-layout">
             <div className="left-stack main-flow">
-              <div className="dashboard-add-row">
-                <AddDropdown
-                  courses={courses}
-                  selectedCourse={courses.find((course) => course.id === selectedCourseId) ?? courses[0]}
-                  taskDraft={taskDraft}
-                  setTaskDraft={setTaskDraft}
-                  addTask={() => addTask("dashboard")}
-                  courseDraft={courseDraft}
-                  setCourseDraft={setCourseDraft}
-                  addCourse={addCourse}
-                  eventDraft={eventDraft}
-                  setEventDraft={setEventDraft}
-                  addEvent={() => addEvent("dashboard")}
-                  smartInput={smartInput}
-                  setSmartInput={setSmartInput}
-                />
-              </div>
               <PriorityCard priorities={priorities} onDone={(id) => updateTaskStatus(id, "DONE")} onStart={(id) => updateTaskStatus(id, "IN_PROGRESS")} onSnooze={snoozeTask} onDelete={deleteTask} />
-              <NextUpCard events={upcomingEvents} />
             </div>
 
             <div className="right-stack action-rail">
-              <ScheduleCard schedule={todaysSchedule} courses={courses} title="Today, in order" />
+              <ScheduleCard
+                schedule={todaysSchedule}
+                upcoming={upcomingEvents}
+                courses={courses}
+                title="Today, in order"
+                action={(
+                  <AddDropdown
+                    courses={courses}
+                    selectedCourse={courses.find((course) => course.id === selectedCourseId) ?? courses[0]}
+                    taskDraft={taskDraft}
+                    setTaskDraft={setTaskDraft}
+                    addTask={() => addTask("dashboard")}
+                    courseDraft={courseDraft}
+                    setCourseDraft={setCourseDraft}
+                    addCourse={addCourse}
+                    eventDraft={eventDraft}
+                    setEventDraft={setEventDraft}
+                    addEvent={() => addEvent("dashboard")}
+                    smartInput={smartInput}
+                    setSmartInput={setSmartInput}
+                  />
+                )}
+              />
               {focusBreaksEnabled && <StudyTimerCard tasks={priorities} breakMinutes={focusBreakMinutes} />}
             </div>
           </section>
@@ -962,6 +968,7 @@ function AddDropdown({
   return (
     <details className="add-dropdown">
       <summary>Add</summary>
+      <div className="add-overlay" aria-hidden="true" />
       <div className="add-menu add-menu-with-tools">
         <div className="add-tabs">
           {(["course", "assignment", "exam", "event"] as const).map((item) => <button key={item} className={addPanel === item ? "active" : ""} onClick={() => {
@@ -1516,25 +1523,6 @@ function AdminPanel({
   );
 }
 
-function NextUpCard({ events }: { events: ScheduleEvent[] }) {
-  return (
-    <article className="card next-up-card">
-      <div className="card-title-row"><h2>Upcoming calendar events</h2></div>
-      <div className="calendar-agenda compact-agenda">
-        {events.length === 0 && <p className="empty">No upcoming calendar events.</p>}
-        {events.map((event) => (
-          <div className="agenda-row" key={event.id}>
-            <span className="event-color" style={{ background: eventCategoryColor(event.category) }} />
-            <div>
-              <strong>{event.title}</strong>
-              <p>{format(parseISO(event.startsAt), "EEE, MMM d · h:mm a")}–{format(parseISO(event.endsAt), "h:mm a")}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </article>
-  );
-}
 
 function DueSoonCard({ tasks, courses }: { tasks: Task[]; courses: Course[] }) {
   return (
@@ -1756,11 +1744,15 @@ function PriorityCard({ priorities, onDone, onStart, onSnooze, onDelete }: { pri
   );
 }
 
-function ScheduleCard({ schedule, courses, title = "Today’s schedule" }: { schedule: ScheduleEvent[]; courses: Course[]; title?: string }) {
+function ScheduleCard({ schedule, upcoming = [], courses: _courses, title = "Today’s schedule", action }: { schedule: ScheduleEvent[]; upcoming?: ScheduleEvent[]; courses: Course[]; title?: string; action?: ReactNode }) {
   return (
-    <article className="card">
-      <div className="card-title-row"><h2>{title}</h2></div>
+    <article className="card schedule-card merged-schedule-card">
+      <div className="card-title-row schedule-title-row">
+        <h2>{title}</h2>
+        {action}
+      </div>
       <div className="timeline">
+        {schedule.length === 0 && <p className="empty">No events today.</p>}
         {schedule.map((event) => {
           return (
             <div className="timeline-row" key={event.id}>
@@ -1772,6 +1764,21 @@ function ScheduleCard({ schedule, courses, title = "Today’s schedule" }: { sch
             </div>
           );
         })}
+      </div>
+      <div className="schedule-upcoming-section">
+        <h3>Upcoming calendar events</h3>
+        <div className="calendar-agenda compact-agenda">
+          {upcoming.length === 0 && <p className="empty">No upcoming calendar events.</p>}
+          {upcoming.map((event) => (
+            <div className="agenda-row" key={event.id}>
+              <span className="event-color" style={{ background: eventCategoryColor(event.category) }} />
+              <div>
+                <strong>{event.title}</strong>
+                <p>{format(parseISO(event.startsAt), "EEE, MMM d · h:mm a")}–{format(parseISO(event.endsAt), "h:mm a")}</p>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </article>
   );

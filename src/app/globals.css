@@ -2202,3 +2202,83 @@ button,
     grid-template-columns: 1fr !important;
   }
 }
+
+/* Final dashboard/today merge + true front-layer Add popup. */
+.schedule-title-row {
+  align-items: center !important;
+  gap: 10px !important;
+}
+.schedule-title-row .add-dropdown {
+  margin-left: auto !important;
+  justify-self: end !important;
+}
+.schedule-title-row .add-dropdown summary {
+  min-width: 0 !important;
+  padding: 9px 16px !important;
+}
+.merged-schedule-card {
+  display: grid;
+  gap: 14px;
+}
+.schedule-upcoming-section {
+  display: grid;
+  gap: 10px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+.schedule-upcoming-section h3 {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted);
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.add-dropdown[open] {
+  position: relative !important;
+  z-index: 2147483000 !important;
+}
+.add-dropdown[open] .add-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483000 !important;
+  background: rgba(15, 23, 42, .10) !important;
+  pointer-events: none !important;
+}
+.add-dropdown[open] .add-menu {
+  position: fixed !important;
+  top: 76px !important;
+  left: 50% !important;
+  right: auto !important;
+  transform: translateX(-50%) !important;
+  width: min(720px, calc(100vw - 36px)) !important;
+  max-height: calc(100vh - 104px) !important;
+  overflow: auto !important;
+  z-index: 2147483001 !important;
+  border: 1px solid #d7dee8 !important;
+  box-shadow: 0 34px 90px rgba(15, 23, 42, .38) !important;
+}
+.courses-page,
+.course-risk-strip,
+.course-action-strip,
+.course-action-buttons,
+.schedule-card,
+.card-title-row {
+  overflow: visible !important;
+}
+.dashboard-layout.beginner-layout {
+  grid-template-columns: minmax(0, 1.55fr) minmax(320px, .82fr) !important;
+}
+@media (max-width: 980px) {
+  .schedule-title-row {
+    align-items: flex-start !important;
+  }
+  .schedule-title-row .add-dropdown {
+    width: auto !important;
+  }
+  .add-dropdown[open] .add-menu {
+    top: 64px !important;
+    width: calc(100vw - 24px) !important;
+    max-height: calc(100vh - 84px) !important;
+  }
+}
