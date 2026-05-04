@@ -2096,3 +2096,33 @@ button,
     justify-content: flex-start !important;
   }
 }
+
+/* Add menu now owns Quick Add + Smart Capture and is shared by Dashboard/Courses. */
+.dashboard-add-row {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+.dashboard-add-row .add-dropdown summary,
+.course-action-buttons .add-dropdown summary {
+  min-width: 128px !important;
+}
+.add-menu-with-tools {
+  width: min(680px, calc(100vw - 56px)) !important;
+}
+.add-menu-tools {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+.add-menu-tools .card {
+  padding: 14px;
+}
+@media (max-width: 760px) {
+  .dashboard-add-row { justify-content: stretch; }
+  .dashboard-add-row .add-dropdown,
+  .dashboard-add-row .add-dropdown summary { width: 100% !important; }
+  .add-menu-tools { grid-template-columns: 1fr; }
+}

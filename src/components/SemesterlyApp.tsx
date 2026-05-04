@@ -691,6 +691,24 @@ export function SemesterlyApp() {
             </div>
 
             <div className="right-stack action-rail">
+              <div className="dashboard-add-row">
+                <AddDropdown
+                  courses={courses}
+                  selectedCourse={courses.find((course) => course.id === selectedCourseId) ?? courses[0]}
+                  taskDraft={taskDraft}
+                  setTaskDraft={setTaskDraft}
+                  addTask={() => addTask("dashboard")}
+                  courseDraft={courseDraft}
+                  setCourseDraft={setCourseDraft}
+                  addCourse={addCourse}
+                  eventDraft={eventDraft}
+                  setEventDraft={setEventDraft}
+                  addEvent={() => addEvent("dashboard")}
+                  smartInput={smartInput}
+                  setSmartInput={setSmartInput}
+                  addSmartTask={addSmartTask}
+                />
+              </div>
               <PriorityCard priorities={priorities} onDone={(id) => updateTaskStatus(id, "DONE")} onStart={(id) => updateTaskStatus(id, "IN_PROGRESS")} onSnooze={snoozeTask} onDelete={deleteTask} />
               {focusBreaksEnabled && <StudyTimerCard tasks={priorities} breakMinutes={focusBreakMinutes} />}
             </div>
@@ -912,6 +930,63 @@ function NameEditor({ name, onSave }: { name: string; onSave: (name: string) => 
   );
 }
 
+function AddDropdown({
+  courses,
+  selectedCourse,
+  taskDraft,
+  setTaskDraft,
+  addTask,
+  courseDraft,
+  setCourseDraft,
+  addCourse,
+  eventDraft,
+  setEventDraft,
+  addEvent,
+  smartInput,
+  setSmartInput,
+  addSmartTask,
+}: {
+  courses: Course[];
+  selectedCourse?: Course;
+  taskDraft: DraftTask;
+  setTaskDraft: (draft: DraftTask) => void;
+  addTask: () => void;
+  courseDraft: DraftCourse;
+  setCourseDraft: (draft: DraftCourse) => void;
+  addCourse: () => void;
+  eventDraft: DraftEvent;
+  setEventDraft: (draft: DraftEvent) => void;
+  addEvent: () => void;
+  smartInput: string;
+  setSmartInput: (value: string) => void;
+  addSmartTask: () => void;
+}) {
+  const [addPanel, setAddPanel] = useState<"course" | "assignment" | "exam" | "event">("course");
+
+  return (
+    <details className="add-dropdown">
+      <summary>Add</summary>
+      <div className="add-menu add-menu-with-tools">
+        <div className="add-tabs">
+          {(["course", "assignment", "exam", "event"] as const).map((item) => <button key={item} className={addPanel === item ? "active" : ""} onClick={() => {
+            setAddPanel(item);
+            if (item === "assignment" || item === "exam") setTaskDraft({ ...taskDraft, courseId: selectedCourse?.id ?? taskDraft.courseId, title: item === "exam" ? "Exam" : taskDraft.title, importance: item === "exam" ? 5 : taskDraft.importance, estimatedMinutes: item === "exam" ? 180 : taskDraft.estimatedMinutes });
+            if (item === "event") setEventDraft({ ...eventDraft, title: selectedCourse ? `${selectedCourse.code} class` : eventDraft.title, category: "CLASS", courseId: selectedCourse?.id ?? eventDraft.courseId });
+          }}>{item === "event" ? "Calendar" : item[0].toUpperCase() + item.slice(1)}</button>)}
+        </div>
+        {addPanel === "course" && <CourseForm courseDraft={courseDraft} setCourseDraft={setCourseDraft} addCourse={addCourse} />}
+        {addPanel === "assignment" && <TaskForm taskDraft={taskDraft} setTaskDraft={setTaskDraft} addTask={addTask} courses={courses} />}
+        {addPanel === "exam" && <TaskForm taskDraft={{ ...taskDraft, title: taskDraft.title || "Exam", importance: 5, estimatedMinutes: Math.max(taskDraft.estimatedMinutes, 180), courseId: taskDraft.courseId || selectedCourse?.id || "" }} setTaskDraft={setTaskDraft} addTask={addTask} courses={courses} />}
+        {addPanel === "event" && <EventForm eventDraft={eventDraft} setEventDraft={setEventDraft} addEvent={addEvent} courses={courses} />}
+        <div className="add-menu-tools">
+          <QuickAdd taskDraft={taskDraft} setTaskDraft={setTaskDraft} addTask={addTask} courses={courses} />
+          <SmartCaptureCard value={smartInput} setValue={setSmartInput} addSmartTask={addSmartTask} />
+        </div>
+      </div>
+    </details>
+  );
+}
+
 function CoursesPage({
   courses,
   tasks,
@@ -953,7 +1028,6 @@ function CoursesPage({
   setSmartInput: (value: string) => void;
   addSmartTask: () => void;
 }) {
-  const [addPanel, setAddPanel] = useState<"course" | "assignment" | "exam" | "event">("course");
   const selectedCourse = courses.find((course) => course.id === selectedCourseId) ?? courses[0];
   const courseTasks = selectedCourse ? tasks.filter((task) => task.courseId === selectedCourse.id) : [];
   const courseEvents = selectedCourse
@@ -997,29 +1071,24 @@ function CoursesPage({
         </div>
         <div className="course-action-buttons">
           {highestRisk && <button className="primary-button" onClick={() => setSelectedCourseId(highestRisk.course.id)}>Open course</button>}
-          <details className="add-dropdown">
-            <summary>Add course</summary>
-            <div className="add-menu">
-              <div className="add-tabs">
-                {(["course", "assignment", "exam", "event"] as const).map((item) => <button key={item} className={addPanel === item ? "active" : ""} onClick={() => {
-                  setAddPanel(item);
-                  if (item === "assignment" || item === "exam") setTaskDraft({ ...taskDraft, courseId: selectedCourse?.id ?? taskDraft.courseId, title: item === "exam" ? "Exam" : taskDraft.title, importance: item === "exam" ? 5 : taskDraft.importance, estimatedMinutes: item === "exam" ? 180 : taskDraft.estimatedMinutes });
-                  if (item === "event") setEventDraft({ ...eventDraft, title: selectedCourse ? `${selectedCourse.code} class` : eventDraft.title, category: "CLASS", courseId: selectedCourse?.id ?? eventDraft.courseId });
-                }}>{item === "event" ? "Calendar" : item[0].toUpperCase() + item.slice(1)}</button>)}
-              </div>
-              {addPanel === "course" && <CourseForm courseDraft={courseDraft} setCourseDraft={setCourseDraft} addCourse={addCourse} />}
-              {addPanel === "assignment" && <TaskForm taskDraft={taskDraft} setTaskDraft={setTaskDraft} addTask={() => addTask("courses")} courses={courses} />}
-              {addPanel === "exam" && <TaskForm taskDraft={{ ...taskDraft, title: taskDraft.title || "Exam", importance: 5, estimatedMinutes: Math.max(taskDraft.estimatedMinutes, 180), courseId: taskDraft.courseId || selectedCourse?.id || "" }} setTaskDraft={setTaskDraft} addTask={() => addTask("courses")} courses={courses} />}
-              {addPanel === "event" && <EventForm eventDraft={eventDraft} setEventDraft={setEventDraft} addEvent={() => addEvent("courses")} courses={courses} />}
-            </div>
-          </details>
+          <AddDropdown
+            courses={courses}
+            selectedCourse={selectedCourse}
+            taskDraft={taskDraft}
+            setTaskDraft={setTaskDraft}
+            addTask={() => addTask("courses")}
+            courseDraft={courseDraft}
+            setCourseDraft={setCourseDraft}
+            addCourse={addCourse}
+            eventDraft={eventDraft}
+            setEventDraft={setEventDraft}
+            addEvent={() => addEvent("courses")}
+            smartInput={smartInput}
+            setSmartInput={setSmartInput}
+            addSmartTask={addSmartTask}
+          />
         </div>
       </article>
-
-      <section className="course-tools-grid">
-        <QuickAdd taskDraft={taskDraft} setTaskDraft={setTaskDraft} addTask={() => addTask("courses")} courses={courses} />
-        <SmartCaptureCard value={smartInput} setValue={setSmartInput} addSmartTask={addSmartTask} />
-      </section>
 
       <section className="courses-layout">
         <aside className="course-sidebar">
