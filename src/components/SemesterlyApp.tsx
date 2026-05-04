@@ -978,6 +978,8 @@ function ProfilePage({
             <div className="card-title-row"><h2>Account</h2></div>
             <button className="ghost-button full-width" onClick={logout}>Sign out</button>
           </article>
+
+          <CategoryEditor categories={scheduleCategories} onSave={updateScheduleCategories} />
         </div>
 
         <article className="card profile-panel">
@@ -988,8 +990,6 @@ function ProfilePage({
           <label className="setting-row"><span>Reminder style</span><select defaultValue="balanced"><option value="quiet">Quiet</option><option value="balanced">Balanced</option><option value="urgent">Urgent</option></select></label>
           <label className="setting-row"><span>Best focus window</span><select defaultValue="evening"><option value="morning">Morning</option><option value="afternoon">Afternoon</option><option value="evening">Evening</option></select></label>
         </article>
-
-        <CategoryEditor categories={scheduleCategories} onSave={updateScheduleCategories} />
       </div>
     </section>
   );
