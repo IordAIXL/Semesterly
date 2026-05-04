@@ -2958,3 +2958,17 @@ button,
     max-height: calc(100vh - 68px) !important;
   }
 }
+
+/* Center page content inside the workspace area to the right of the sidebar. */
+@media (min-width: 901px) {
+  .app-frame:not(.account-gate-frame) {
+    overflow-x: hidden;
+  }
+  .app-frame:not(.account-gate-frame) > .main {
+    justify-self: center !important;
+    width: min(1160px, calc(100vw - 220px - 32px)) !important;
+    max-width: calc(100vw - 220px - 32px) !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+}
