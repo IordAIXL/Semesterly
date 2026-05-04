@@ -2,7 +2,6 @@
 
 import { addDays, differenceInCalendarDays, endOfMonth, endOfWeek, format, isSameDay, isSameMonth, isToday, parseISO, startOfMonth, startOfWeek } from "date-fns";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { createPortal } from "react-dom";
 import { allSampleStudents, defaultStudent } from "@/lib/sample-users";
 import { parseTaskInput } from "@/lib/natural-language";
 import { prioritizeTasks } from "@/lib/priority";
@@ -985,7 +984,7 @@ function ProfilePage({
 
         <CategoryEditor categories={scheduleCategories} onSave={updateScheduleCategories} />
 
-        <article className="card profile-panel account-panel">
+        <article className="card profile-panel">
           <div className="card-title-row"><h2>Account</h2></div>
           <button className="ghost-button full-width" onClick={logout}>Sign out</button>
         </article>
@@ -1080,11 +1079,6 @@ function AddDropdown({
 }) {
   const [addPanel, setAddPanel] = useState<"course" | "assignment" | "exam" | "event">("course");
   const [addOpen, setAddOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
   const menu = (
     <div className="add-menu add-menu-with-tools" role="dialog" aria-label="Add to Semesterly">
       <div className="add-tabs">
@@ -1117,13 +1111,8 @@ function AddDropdown({
   return (
     <div className="add-dropdown courses-add-modal" data-open={addOpen ? "true" : "false"}>
       <button className="add-trigger" type="button" aria-haspopup="dialog" aria-expanded={addOpen} onClick={() => setAddOpen((open) => !open)}>Add</button>
-      {mounted && addOpen && createPortal(
-        <div className="add-portal" data-open="true">
-          <button className="add-overlay" aria-label="Close add menu" type="button" onClick={() => setAddOpen(false)} />
-          {menu}
-        </div>,
-        document.body,
-      )}
+      {addOpen && <button className="add-overlay" aria-label="Close add menu" type="button" onClick={() => setAddOpen(false)} />}
+      {addOpen && menu}
     </div>
   );
 }
