@@ -735,11 +735,17 @@ export function SemesterlyApp() {
     <div className={`app-frame ${theme === "dark" ? "theme-dark" : ""}`}>
       <header className="topbar">
         <div className="topbar-left">
-          <button className="brand mobile-nav-trigger" type="button" aria-label="Open module menu" aria-expanded={mobileNavOpen} onClick={() => {
-            if (typeof window !== "undefined" && window.matchMedia("(max-width: 900px)").matches) setMobileNavOpen((open) => !open);
-          }}><span className="brand-mark">S/</span><span className="brand-name">Semesterly</span></button>
+          <button className="brand mobile-nav-trigger" type="button" aria-label="Open module menu" aria-expanded={mobileNavOpen} onClick={() => setMobileNavOpen((open) => !open)}><span className="brand-mark">S/</span><span className="brand-name">Semesterly</span></button>
           {mobileNavOpen && <button className="mobile-nav-backdrop" type="button" aria-label="Close module menu" onClick={() => setMobileNavOpen(false)} />}
-          <nav className="topnav" data-open={mobileNavOpen ? "true" : "false"} aria-label="Primary navigation">
+          <nav className="topnav desktop-module-nav" aria-label="Primary navigation">
+            {(["dashboard", "calendar", "courses", "profile", ...(adminUnlocked ? ["admin" as View] : [])] as View[]).map((item) => (
+              <button className={view === item ? "active" : ""} key={item} onClick={() => setView(item)}>
+                {item === "dashboard" ? "Dashboard" : item === "calendar" ? "Calendar" : item === "courses" ? "Courses" : item === "admin" ? "Admin" : "Profile"}
+              </button>
+            ))}
+          </nav>
+          <nav className="mobile-module-drawer" data-open={mobileNavOpen ? "true" : "false"} aria-label="Mobile module navigation">
+            <strong>Semesterly</strong>
             {(["dashboard", "calendar", "courses", "profile", ...(adminUnlocked ? ["admin" as View] : [])] as View[]).map((item) => (
               <button className={view === item ? "active" : ""} key={item} onClick={() => { setView(item); setMobileNavOpen(false); }}>
                 {item === "dashboard" ? "Dashboard" : item === "calendar" ? "Calendar" : item === "courses" ? "Courses" : item === "admin" ? "Admin" : "Profile"}
