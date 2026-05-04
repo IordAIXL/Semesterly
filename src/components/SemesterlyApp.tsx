@@ -774,6 +774,7 @@ export function SemesterlyApp() {
                     smartInput={smartInput}
                     setSmartInput={setSmartInput}
                     scheduleCategories={scheduleCategories}
+                    modalLayer
                   />
                 )}
               />
