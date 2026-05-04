@@ -25,6 +25,7 @@ type DraftCourse = {
   name: string;
   color: string;
   importance: number;
+  location: string;
 };
 
 type DraftEvent = {
@@ -45,9 +46,16 @@ type ApiStudent = {
   school?: string | null;
   year?: string | null;
   major?: string | null;
+  scheduleCategories?: string | null;
   courses: Array<Course & { userId?: string }>;
   tasks: Array<Task & { userId?: string; dueAt: string | Date }>;
   events: Array<ScheduleEvent & { userId?: string; startsAt: string | Date; endsAt: string | Date }>;
+};
+
+type ScheduleCategory = {
+  id: string;
+  label: string;
+  color: string;
 };
 
 type StudentProfile = {
@@ -55,6 +63,7 @@ type StudentProfile = {
   school?: string | null;
   year?: string | null;
   major?: string | null;
+  scheduleCategories?: ScheduleCategory[];
 };
 
 const STORAGE_KEY = "semesterly.mvp.state.v2";
@@ -75,6 +84,7 @@ const defaultCourse: DraftCourse = {
   name: "",
   color: "#1a73e8",
   importance: 3,
+  location: "",
 };
 
 const defaultEvent: DraftEvent = {
@@ -104,21 +114,44 @@ function statusLabel(status: TaskStatus) {
   return "Done";
 }
 
-const eventCategoryMeta: Record<ScheduleEvent["category"], { label: string; color: string }> = {
-  CLASS: { label: "Class", color: "#1a73e8" },
-  STUDY: { label: "Study", color: "#34a853" },
-  PERSONAL: { label: "Personal", color: "#a142f4" },
-  WORK: { label: "Work", color: "#fbbc04" },
-  CLUB: { label: "Club", color: "#fa7b17" },
-  OTHER: { label: "Other", color: "#5f6368" },
-};
+const defaultScheduleCategories: ScheduleCategory[] = [
+  { id: "CLASS", label: "Class", color: "#1a73e8" },
+  { id: "STUDY", label: "Study", color: "#34a853" },
+  { id: "PERSONAL", label: "Personal", color: "#a142f4" },
+  { id: "WORK", label: "Work", color: "#fbbc04" },
+  { id: "CLUB", label: "Club", color: "#fa7b17" },
+  { id: "OTHER", label: "Other", color: "#5f6368" },
+];
 
-function eventCategoryLabel(category: ScheduleEvent["category"]) {
-  return eventCategoryMeta[category]?.label ?? category.toLowerCase();
+function categoryId(label: string) {
+  return label.trim().toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 28) || "OTHER";
 }
 
-function eventCategoryColor(category: ScheduleEvent["category"]) {
-  return eventCategoryMeta[category]?.color ?? "#5f6368";
+function eventCategoryLabel(category: ScheduleEvent["category"], categories: ScheduleCategory[] = defaultScheduleCategories) {
+  return categories.find((item) => item.id === category)?.label ?? category.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function eventCategoryColor(category: ScheduleEvent["category"], categories: ScheduleCategory[] = defaultScheduleCategories) {
+  return categories.find((item) => item.id === category)?.color ?? "#5f6368";
+}
+
+function mapLink(location: string) {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
+}
+
+function parseScheduleCategories(value?: string | null): ScheduleCategory[] {
+  if (!value) return defaultScheduleCategories;
+  try {
+    const parsed = JSON.parse(value) as ScheduleCategory[];
+    const custom = parsed.filter((item) => item?.id && item?.label && item?.color);
+    return [...defaultScheduleCategories, ...custom.filter((item) => !defaultScheduleCategories.some((base) => base.id === item.id))];
+  } catch {
+    return defaultScheduleCategories;
+  }
+}
+
+function customOnly(categories: ScheduleCategory[]) {
+  return categories.filter((item) => !defaultScheduleCategories.some((base) => base.id === item.id));
 }
 
 function mapTask(task: ApiStudent["tasks"][number]): Task {
@@ -148,7 +181,7 @@ function mapEvent(event: ApiStudent["events"][number]): ScheduleEvent {
 export function SemesterlyApp() {
   const [view, setView] = useState<View>("dashboard");
   const [studentId, setStudentId] = useState(defaultStudent.id);
-  const [studentProfile, setStudentProfile] = useState<StudentProfile>({ name: defaultStudent.name, school: defaultStudent.school, year: defaultStudent.year, major: defaultStudent.major });
+  const [studentProfile, setStudentProfile] = useState<StudentProfile>({ name: defaultStudent.name, school: defaultStudent.school, year: defaultStudent.year, major: defaultStudent.major, scheduleCategories: defaultScheduleCategories });
   const [courses, setCourses] = useState<Course[]>(defaultStudent.courses);
   const [tasks, setTasks] = useState<Task[]>(defaultStudent.tasks);
   const [schedule, setSchedule] = useState<ScheduleEvent[]>(defaultStudent.schedule);
@@ -216,6 +249,7 @@ export function SemesterlyApp() {
     .slice(0, 5);
   const focusPlan = priorities.slice(0, 3);
   const recommendations = buildRecommendations(tasks, courses);
+  const scheduleCategories = studentProfile.scheduleCategories ?? defaultScheduleCategories;
   const weekMinutes = activeTasks.reduce((sum, task) => sum + task.estimatedMinutes, 0);
   const courseLoads = courses.map((course) => ({
     course,
@@ -224,8 +258,8 @@ export function SemesterlyApp() {
   })).sort((a, b) => b.minutes - a.minutes);
 
   function applyApiStudent(user: ApiStudent) {
-    setStudentProfile({ name: user.name, school: user.school, year: user.year, major: user.major });
-    setCourses(user.courses.map((course) => ({ id: course.id, code: course.code, name: course.name, color: course.color, importance: course.importance })));
+    setStudentProfile({ name: user.name, school: user.school, year: user.year, major: user.major, scheduleCategories: parseScheduleCategories(user.scheduleCategories) });
+    setCourses(user.courses.map((course) => ({ id: course.id, code: course.code, name: course.name, color: course.color, importance: course.importance, location: course.location })));
     setTasks(user.tasks.map(mapTask));
     setSchedule(user.events.map(mapEvent));
     setSelectedCourseId(null);
@@ -233,7 +267,7 @@ export function SemesterlyApp() {
 
   function applyLocalStudent(id: string, initial = false) {
     const fallback = allSampleStudents.find((student) => student.id === id) ?? defaultStudent;
-    setStudentProfile({ name: fallback.name, school: fallback.school, year: fallback.year, major: fallback.major });
+    setStudentProfile({ name: fallback.name, school: fallback.school, year: fallback.year, major: fallback.major, scheduleCategories: defaultScheduleCategories });
     const saved = initial ? window.localStorage.getItem(STORAGE_KEY) : null;
     if (saved) {
       try {
@@ -386,12 +420,13 @@ export function SemesterlyApp() {
       name: courseDraft.name.trim(),
       color: courseDraft.color,
       importance: Number(courseDraft.importance),
+      location: courseDraft.location.trim() || undefined,
     };
     if (dataMode === "api") {
       try {
         const body = await apiJson<{ course: Course }>("/api/courses", {
           method: "POST",
-          body: JSON.stringify({ code: course.code, name: course.name, color: course.color, importance: course.importance }),
+          body: JSON.stringify({ code: course.code, name: course.name, color: course.color, importance: course.importance, location: course.location }),
         });
         setCourses((items) => [body.course, ...items]);
         setSelectedCourseId(body.course.id);
@@ -449,12 +484,32 @@ export function SemesterlyApp() {
           method: "PATCH",
           body: JSON.stringify({ name: nextName }),
         });
-        setStudentProfile({ name: body.user.name, school: body.user.school, year: body.user.year, major: body.user.major });
+        setStudentProfile({ name: body.user.name, school: body.user.school, year: body.user.year, major: body.user.major, scheduleCategories: parseScheduleCategories(body.user.scheduleCategories) });
       } catch {
         setDataMode("local");
       }
     }
     setActionNotice("Updated your profile name.");
+  }
+
+  async function updateScheduleCategories(categories: ScheduleCategory[]) {
+    const nextCategories = categories.length ? categories : defaultScheduleCategories;
+    setStudentProfile((profile) => ({ ...profile, scheduleCategories: nextCategories }));
+    if (!nextCategories.some((category) => category.id === eventDraft.category)) {
+      setEventDraft((draft) => ({ ...draft, category: nextCategories[0]?.id ?? "OTHER" }));
+    }
+    if (dataMode === "api") {
+      try {
+        const body = await apiJson<{ user: ApiStudent }>("/api/me", {
+          method: "PATCH",
+          body: JSON.stringify({ scheduleCategories: customOnly(nextCategories) }),
+        });
+        setStudentProfile({ name: body.user.name, school: body.user.school, year: body.user.year, major: body.user.major, scheduleCategories: parseScheduleCategories(body.user.scheduleCategories) });
+      } catch {
+        setDataMode("local");
+      }
+    }
+    setActionNotice("Updated schedule categories.");
   }
 
   async function updateTaskStatus(id: string, status: TaskStatus) {
@@ -695,6 +750,7 @@ export function SemesterlyApp() {
                 schedule={todaysSchedule}
                 upcoming={upcomingEvents}
                 courses={courses}
+                scheduleCategories={scheduleCategories}
                 title="Today, in order"
                 action={(
                   <AddDropdown
@@ -711,6 +767,7 @@ export function SemesterlyApp() {
                     addEvent={() => addEvent("dashboard")}
                     smartInput={smartInput}
                     setSmartInput={setSmartInput}
+                    scheduleCategories={scheduleCategories}
                   />
                 )}
               />
@@ -740,6 +797,7 @@ export function SemesterlyApp() {
             smartInput={smartInput}
             setSmartInput={setSmartInput}
             addSmartTask={addSmartTask}
+            scheduleCategories={scheduleCategories}
           />
         )}
 
@@ -757,7 +815,9 @@ export function SemesterlyApp() {
             setFocusBreakMinutes={setFocusBreakMinutes}
             updateProfileName={updateProfileName}
             logout={logout}
-/>
+            scheduleCategories={scheduleCategories}
+            updateScheduleCategories={updateScheduleCategories}
+          />
         )}
 
         {view === "calendar" && (
@@ -771,6 +831,7 @@ export function SemesterlyApp() {
             setMode={setCalendarMode}
             selectedDate={selectedDate}
             setSelectedDate={setSelectedDate}
+            scheduleCategories={scheduleCategories}
           />
         )}
 
@@ -835,6 +896,9 @@ function AccountGate({
   loginWithPassword: () => void;
   createAccount: () => void;
 }) {
+  const [authMode, setAuthMode] = useState<"create" | "signin">("create");
+  const isSignin = authMode === "signin";
+
   return (
     <div className={`app-frame account-gate-frame ${theme === "dark" ? "theme-dark" : ""}`}>
       <main className="account-gate">
@@ -842,15 +906,18 @@ function AccountGate({
           <div className="brand account-brand"><span className="brand-mark">S</span> Semesterly</div>
           <div className="auth-card-copy">
             <p className="eyebrow">Private student workspace</p>
-            <h1>Start Semesterly</h1>
-            <p className="subtitle">Create a private account, or sign in with your existing email and password.</p>
+            <h1>{isSignin ? "Sign in" : "Create account"}</h1>
+            <p className="subtitle">{isSignin ? "Use your email and password. No extra account setup fields." : "Create a private workspace for your courses, assignments, and schedule."}</p>
           </div>
-          <label className="setting-row"><span>Name</span><input value={signupName} onChange={(event) => setSignupName(event.target.value)} placeholder="Your name" type="text" /></label>
+          <div className="auth-mode-tabs" role="tablist" aria-label="Account action">
+            <button className={!isSignin ? "active" : ""} type="button" onClick={() => setAuthMode("create")}>Create account</button>
+            <button className={isSignin ? "active" : ""} type="button" onClick={() => setAuthMode("signin")}>Sign in</button>
+          </div>
+          {!isSignin && <label className="setting-row"><span>Name</span><input value={signupName} onChange={(event) => setSignupName(event.target.value)} placeholder="Your name" type="text" /></label>}
           <label className="setting-row"><span>Email</span><input value={loginEmail} onChange={(event) => setLoginEmail(event.target.value)} placeholder="you@example.com" type="email" /></label>
-          <label className="setting-row"><span>Password</span><input value={loginPassword} onChange={(event) => setLoginPassword(event.target.value)} placeholder="At least 10 characters" type="password" /></label>
-          <button className="primary-button" onClick={createAccount}>Create private account</button>
-          <div className="divider"><span>Already have one?</span></div>
-          <button className="ghost-button full-width" onClick={loginWithPassword}>Sign in</button>
+          <label className="setting-row"><span>Password</span><input value={loginPassword} onChange={(event) => setLoginPassword(event.target.value)} placeholder={isSignin ? "Password" : "At least 8 characters"} type="password" /></label>
+          <button className="primary-button" onClick={isSignin ? loginWithPassword : createAccount}>{isSignin ? "Sign in" : "Create private account"}</button>
+          <button className="ghost-button full-width auth-switch-button" type="button" onClick={() => setAuthMode(isSignin ? "create" : "signin")}>{isSignin ? "Need an account? Create one" : "Already have an account? Sign in"}</button>
           {authNotice && <p className="fine-print">{authNotice}</p>}
         </section>
       </main>
@@ -868,6 +935,8 @@ function ProfilePage({
   setFocusBreakMinutes,
   updateProfileName,
   logout,
+  scheduleCategories,
+  updateScheduleCategories,
 }: {
   student: StudentProfile;
   courses: Course[];
@@ -881,6 +950,8 @@ function ProfilePage({
   setFocusBreakMinutes: (minutes: number) => void;
   updateProfileName: (name: string) => void;
   logout: () => void;
+  scheduleCategories: ScheduleCategory[];
+  updateScheduleCategories: (categories: ScheduleCategory[]) => void;
 }) {
   return (
     <section className="profile-page">
@@ -906,6 +977,8 @@ function ProfilePage({
           <label className="setting-row"><span>Best focus window</span><select defaultValue="evening"><option value="morning">Morning</option><option value="afternoon">Afternoon</option><option value="evening">Evening</option></select></label>
         </article>
 
+        <CategoryEditor categories={scheduleCategories} onSave={updateScheduleCategories} />
+
         <article className="card profile-panel">
           <div className="card-title-row"><h2>Account</h2></div>
           <button className="ghost-button full-width" onClick={logout}>Sign out</button>
@@ -927,6 +1000,45 @@ function NameEditor({ name, onSave }: { name: string; onSave: (name: string) => 
   );
 }
 
+function CategoryEditor({ categories, onSave }: { categories: ScheduleCategory[]; onSave: (categories: ScheduleCategory[]) => void }) {
+  const [label, setLabel] = useState("");
+  const [color, setColor] = useState("#1a73e8");
+  const custom = customOnly(categories);
+
+  function addCategory() {
+    const nextLabel = label.trim();
+    if (!nextLabel) return;
+    const id = categoryId(nextLabel);
+    const withoutDuplicate = categories.filter((item) => item.id !== id);
+    onSave([...withoutDuplicate, { id, label: nextLabel, color }]);
+    setLabel("");
+  }
+
+  function removeCategory(id: string) {
+    onSave(categories.filter((item) => item.id !== id));
+  }
+
+  return (
+    <article className="card profile-panel category-editor">
+      <div className="card-title-row"><h2>Schedule categories</h2></div>
+      <p className="muted-copy">Create your own labels for calendar items.</p>
+      <div className="category-chip-list">
+        {categories.map((category) => (
+          <span className="category-chip" key={category.id} style={{ borderColor: category.color }}>
+            <i style={{ background: category.color }} />{category.label}
+            {custom.some((item) => item.id === category.id) && <button type="button" aria-label={`Remove ${category.label}`} onClick={() => removeCategory(category.id)}>×</button>}
+          </span>
+        ))}
+      </div>
+      <div className="category-add-row">
+        <input value={label} onChange={(event) => setLabel(event.target.value)} placeholder="Lab, Gym, Office hours…" />
+        <input type="color" value={color} onChange={(event) => setColor(event.target.value)} aria-label="Category color" />
+        <button className="ghost-button" type="button" onClick={addCategory}>Add</button>
+      </div>
+    </article>
+  );
+}
+
 function AddDropdown({
   courses,
   selectedCourse,
@@ -941,6 +1053,7 @@ function AddDropdown({
   addEvent,
   smartInput,
   setSmartInput,
+  scheduleCategories,
   modalLayer = false,
 }: {
   courses: Course[];
@@ -956,6 +1069,7 @@ function AddDropdown({
   addEvent: () => void;
   smartInput: string;
   setSmartInput: (value: string) => void;
+  scheduleCategories: ScheduleCategory[];
   modalLayer?: boolean;
 }) {
   const [addPanel, setAddPanel] = useState<"course" | "assignment" | "exam" | "event">("course");
@@ -972,7 +1086,7 @@ function AddDropdown({
       {addPanel === "course" && <CourseForm courseDraft={courseDraft} setCourseDraft={setCourseDraft} addCourse={addCourse} />}
       {addPanel === "assignment" && <TaskForm taskDraft={taskDraft} setTaskDraft={setTaskDraft} addTask={addTask} courses={courses} />}
       {addPanel === "exam" && <TaskForm taskDraft={{ ...taskDraft, title: taskDraft.title || "Exam", importance: 5, estimatedMinutes: Math.max(taskDraft.estimatedMinutes, 180), courseId: taskDraft.courseId || selectedCourse?.id || "" }} setTaskDraft={setTaskDraft} addTask={addTask} courses={courses} />}
-      {addPanel === "event" && <EventForm eventDraft={eventDraft} setEventDraft={setEventDraft} addEvent={addEvent} courses={courses} />}
+      {addPanel === "event" && <EventForm eventDraft={eventDraft} setEventDraft={setEventDraft} addEvent={addEvent} courses={courses} scheduleCategories={scheduleCategories} />}
       <div className="add-menu-tools single-tool">
         <SmartCaptureCard value={smartInput} setValue={setSmartInput} />
       </div>
@@ -1018,6 +1132,7 @@ function CoursesPage({
   smartInput,
   setSmartInput,
   addSmartTask,
+  scheduleCategories,
 }: {
   courses: Course[];
   tasks: Task[];
@@ -1038,6 +1153,7 @@ function CoursesPage({
   smartInput: string;
   setSmartInput: (value: string) => void;
   addSmartTask: () => void;
+  scheduleCategories: ScheduleCategory[];
 }) {
   const selectedCourse = courses.find((course) => course.id === selectedCourseId) ?? courses[0];
   const courseTasks = selectedCourse ? tasks.filter((task) => task.courseId === selectedCourse.id) : [];
@@ -1095,6 +1211,7 @@ function CoursesPage({
             addEvent={() => addEvent("courses")}
             smartInput={smartInput}
             setSmartInput={setSmartInput}
+            scheduleCategories={scheduleCategories}
             modalLayer
           />
         </div>
@@ -1121,6 +1238,7 @@ function CoursesPage({
                 <p className="eyebrow">{selectedCourse.code}</p>
                 <h2>{selectedCourse.name}</h2>
                 <p>Importance {selectedCourse.importance}/5 · {minutesLabel(workload)} open workload · {courseEvents.length} calendar items</p>
+                {selectedCourse.location && <a className="map-link" href={mapLink(selectedCourse.location)} target="_blank" rel="noreferrer">Open {selectedCourse.location} in Maps</a>}
               </div>
               <div className="metrics-row">
                 <Metric label="Open" value={openTasks.length} />
@@ -1133,7 +1251,7 @@ function CoursesPage({
             <div className="course-subgrid">
               <article className="card">
                 <div className="card-title-row"><h2>Course calendar</h2></div>
-                <CalendarAgenda events={courseEvents} courses={courses} />
+                <CalendarAgenda events={courseEvents} courses={courses} scheduleCategories={scheduleCategories} />
               </article>
 
               <article className="card">
@@ -1179,6 +1297,7 @@ function CalendarPage({
   setMode,
   selectedDate,
   setSelectedDate,
+  scheduleCategories,
 }: {
   schedule: ScheduleEvent[];
   courses: Course[];
@@ -1189,6 +1308,7 @@ function CalendarPage({
   setMode: (mode: CalendarMode) => void;
   selectedDate: Date;
   setSelectedDate: (date: Date | ((date: Date) => Date)) => void;
+  scheduleCategories: ScheduleCategory[];
 }) {
   const monthStart = startOfMonth(selectedDate);
   const monthGridStart = startOfWeek(monthStart);
@@ -1226,7 +1346,7 @@ function CalendarPage({
         <section className="calendar-semester">
           <article className="card">
             <div className="card-title-row"><h2>Full semester</h2></div>
-            <CalendarAgenda events={schedule} courses={courses} groupByMonth />
+            <CalendarAgenda events={schedule} courses={courses} groupByMonth scheduleCategories={scheduleCategories} />
           </article>
         </section>
       ) : (
@@ -1253,8 +1373,8 @@ function CalendarPage({
                       {dayEvents.map((event) => {
                         return (
                           <div className="calendar-event" key={event.id}>
-                            <span className="event-color" style={{ background: eventCategoryColor(event.category) }} />
-                            <div><strong>{event.title}</strong><p>{format(parseISO(event.startsAt), "h:mm a")} · {event.location ?? eventCategoryLabel(event.category)}</p></div>
+                            <span className="event-color" style={{ background: eventCategoryColor(event.category, scheduleCategories) }} />
+                            <div><strong>{event.title}</strong><p>{format(parseISO(event.startsAt), "h:mm a")} · {event.location ? <a className="inline-map-link" href={mapLink(event.location)} target="_blank" rel="noreferrer">{event.location}</a> : eventCategoryLabel(event.category, scheduleCategories)}</p></div>
                           </div>
                         );
                       })}
@@ -1266,7 +1386,7 @@ function CalendarPage({
           </article>
 
           <div className="right-stack calendar-form-stack">
-            <EventForm eventDraft={eventDraft} setEventDraft={setEventDraft} addEvent={addEvent} courses={courses} />
+            <EventForm eventDraft={eventDraft} setEventDraft={setEventDraft} addEvent={addEvent} courses={courses} scheduleCategories={scheduleCategories} />
           </div>
         </section>
       )}
@@ -1274,7 +1394,7 @@ function CalendarPage({
   );
 }
 
-function CalendarAgenda({ events, courses, groupByMonth = false }: { events: ScheduleEvent[]; courses: Course[]; groupByMonth?: boolean }) {
+function CalendarAgenda({ events, courses: _courses, groupByMonth = false, scheduleCategories = defaultScheduleCategories }: { events: ScheduleEvent[]; courses: Course[]; groupByMonth?: boolean; scheduleCategories?: ScheduleCategory[] }) {
   if (!events.length) return <p className="empty">No calendar items in this view.</p>;
   let lastGroup = "";
   return (
@@ -1288,10 +1408,10 @@ function CalendarAgenda({ events, courses, groupByMonth = false }: { events: Sch
           <div key={event.id}>
             {showGroup && <h3 className="agenda-month">{group}</h3>}
             <div className="agenda-row">
-              <span className="event-color" style={{ background: eventCategoryColor(event.category) }} />
+              <span className="event-color" style={{ background: eventCategoryColor(event.category, scheduleCategories) }} />
               <div>
                 <strong>{event.title}</strong>
-                <p>{format(startsAt, "EEE, MMM d · h:mm a")}–{format(parseISO(event.endsAt), "h:mm a")} · {event.location ?? eventCategoryLabel(event.category)}</p>
+                <p>{format(startsAt, "EEE, MMM d · h:mm a")}–{format(parseISO(event.endsAt), "h:mm a")} · {event.location ? <a className="inline-map-link" href={mapLink(event.location)} target="_blank" rel="noreferrer">{event.location}</a> : eventCategoryLabel(event.category, scheduleCategories)}</p>
               </div>
             </div>
           </div>
@@ -1754,7 +1874,7 @@ function PriorityCard({ priorities, onDone, onStart, onSnooze, onDelete }: { pri
   );
 }
 
-function ScheduleCard({ schedule, upcoming = [], courses: _courses, title = "Today’s schedule", action }: { schedule: ScheduleEvent[]; upcoming?: ScheduleEvent[]; courses: Course[]; title?: string; action?: ReactNode }) {
+function ScheduleCard({ schedule, upcoming = [], courses: _courses, scheduleCategories = defaultScheduleCategories, title = "Today’s schedule", action }: { schedule: ScheduleEvent[]; upcoming?: ScheduleEvent[]; courses: Course[]; scheduleCategories?: ScheduleCategory[]; title?: string; action?: ReactNode }) {
   return (
     <article className="card schedule-card merged-schedule-card">
       <div className="card-title-row schedule-title-row">
@@ -1768,8 +1888,8 @@ function ScheduleCard({ schedule, upcoming = [], courses: _courses, title = "Tod
             <div className="timeline-row" key={event.id}>
               <div className="time">{format(parseISO(event.startsAt), "h:mm a")}</div>
               <div className="event-card">
-                <span className="event-color" style={{ background: eventCategoryColor(event.category) }} />
-                <div><strong>{event.title}</strong><p>{event.location ?? eventCategoryLabel(event.category)} · until {format(parseISO(event.endsAt), "h:mm a")}</p></div>
+                <span className="event-color" style={{ background: eventCategoryColor(event.category, scheduleCategories) }} />
+                <div><strong>{event.title}</strong><p>{event.location ? <a className="inline-map-link" href={mapLink(event.location)} target="_blank" rel="noreferrer">{event.location}</a> : eventCategoryLabel(event.category, scheduleCategories)} · until {format(parseISO(event.endsAt), "h:mm a")}</p></div>
               </div>
             </div>
           );
@@ -1781,7 +1901,7 @@ function ScheduleCard({ schedule, upcoming = [], courses: _courses, title = "Tod
           {upcoming.length === 0 && <p className="empty">No upcoming calendar events.</p>}
           {upcoming.map((event) => (
             <div className="agenda-row" key={event.id}>
-              <span className="event-color" style={{ background: eventCategoryColor(event.category) }} />
+              <span className="event-color" style={{ background: eventCategoryColor(event.category, scheduleCategories) }} />
               <div>
                 <strong>{event.title}</strong>
                 <p>{format(parseISO(event.startsAt), "EEE, MMM d · h:mm a")}–{format(parseISO(event.endsAt), "h:mm a")}</p>
@@ -1847,6 +1967,7 @@ function CourseForm({ courseDraft, setCourseDraft, addCourse }: { courseDraft: D
       <div className="form-grid">
         <label>Code<input value={courseDraft.code} onChange={(event) => setCourseDraft({ ...courseDraft, code: event.target.value })} placeholder="CSCE 110" /></label>
         <label>Name<input value={courseDraft.name} onChange={(event) => setCourseDraft({ ...courseDraft, name: event.target.value })} placeholder="Programming I" /></label>
+        <label className="wide">Location<input value={courseDraft.location} onChange={(event) => setCourseDraft({ ...courseDraft, location: event.target.value })} placeholder="Building and room" /></label>
         <label>Color<input type="color" value={courseDraft.color} onChange={(event) => setCourseDraft({ ...courseDraft, color: event.target.value })} /></label>
         <label>Importance<select value={courseDraft.importance} onChange={(event) => setCourseDraft({ ...courseDraft, importance: Number(event.target.value) })}>{[1,2,3,4,5].map((n) => <option key={n} value={n}>{n}/5</option>)}</select></label>
       </div>
@@ -1855,7 +1976,7 @@ function CourseForm({ courseDraft, setCourseDraft, addCourse }: { courseDraft: D
   );
 }
 
-function EventForm({ eventDraft, setEventDraft, addEvent, courses = [] }: { eventDraft: DraftEvent; setEventDraft: (draft: DraftEvent) => void; addEvent: (destination?: View) => void; courses?: Course[] }) {
+function EventForm({ eventDraft, setEventDraft, addEvent, courses = [], scheduleCategories = defaultScheduleCategories }: { eventDraft: DraftEvent; setEventDraft: (draft: DraftEvent) => void; addEvent: (destination?: View) => void; courses?: Course[]; scheduleCategories?: ScheduleCategory[] }) {
   return (
     <article className="card">
       <h2>Add schedule item</h2>
@@ -1865,7 +1986,7 @@ function EventForm({ eventDraft, setEventDraft, addEvent, courses = [] }: { even
         <label>Start<input type="time" value={eventDraft.startTime} onChange={(event) => setEventDraft({ ...eventDraft, startTime: event.target.value })} /></label>
         <label>End<input type="time" value={eventDraft.endTime} onChange={(event) => setEventDraft({ ...eventDraft, endTime: event.target.value })} /></label>
         <label>Location<input value={eventDraft.location} onChange={(event) => setEventDraft({ ...eventDraft, location: event.target.value })} placeholder="Library" /></label>
-        <label>Category<select value={eventDraft.category} onChange={(event) => setEventDraft({ ...eventDraft, category: event.target.value as ScheduleEvent["category"] })}>{(["STUDY", "CLASS", "PERSONAL", "WORK", "CLUB", "OTHER"] as ScheduleEvent["category"][]).map((item) => <option key={item} value={item}>{eventCategoryLabel(item)}</option>)}</select></label>
+        <label>Category<select value={eventDraft.category} onChange={(event) => setEventDraft({ ...eventDraft, category: event.target.value })}>{scheduleCategories.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
         <label>Course<select value={eventDraft.courseId} onChange={(event) => setEventDraft({ ...eventDraft, courseId: event.target.value })}><option value="">No course</option>{courses.map((course) => <option key={course.id} value={course.id}>{course.code}</option>)}</select></label>
       </div>
       <button className="primary-button" onClick={() => addEvent("calendar")}>Add schedule item</button>

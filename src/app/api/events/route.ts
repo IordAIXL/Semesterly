@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
   const auth = requireUser(request);
   if (isAuthResponse(auth)) return auth;
   const { userId } = auth;
-  const body = await request.json().catch(() => null) as { title?: string; startsAt?: string; endsAt?: string; category?: "CLASS" | "STUDY" | "PERSONAL" | "WORK" | "CLUB" | "OTHER"; location?: string; courseId?: string } | null;
+  const body = await request.json().catch(() => null) as { title?: string; startsAt?: string; endsAt?: string; category?: string; location?: string; courseId?: string } | null;
   if (!body?.title || !body.startsAt || !body.endsAt) return NextResponse.json({ error: "Title, start, and end required" }, { status: 400 });
   const startsAt = new Date(body.startsAt);
   const endsAt = new Date(body.endsAt);
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
       title: body.title,
       startsAt,
       endsAt,
-      category: body.category ?? "OTHER",
+      category: body.category?.trim() || "OTHER",
       location: body.location,
     },
   });

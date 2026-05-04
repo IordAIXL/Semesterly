@@ -6,6 +6,7 @@ export type Course = {
   name: string;
   color: string;
   importance: number;
+  location?: string | null;
 };
 
 export type Task = {
@@ -25,7 +26,7 @@ export type ScheduleEvent = {
   endsAt: string;
   location?: string;
   courseId?: string;
-  category: "CLASS" | "STUDY" | "PERSONAL" | "WORK" | "CLUB" | "OTHER";
+  category: string;
 };
 
 export type PriorityResult = Task & {

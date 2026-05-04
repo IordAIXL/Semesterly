@@ -38,6 +38,7 @@ model User {
   school    String?
   year      String?
   major     String?
+  scheduleCategories String?
   createdAt DateTime @default(now())
   terms     Term[]
   courses   Course[]
@@ -109,7 +110,7 @@ model Event {
   startsAt  DateTime
   endsAt    DateTime
   location  String?
-  category  EventCategory @default(OTHER)
+  category  String        @default("OTHER")
   source    String        @default("manual")
   user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   course    Course?       @relation(fields: [courseId], references: [id], onDelete: SetNull)

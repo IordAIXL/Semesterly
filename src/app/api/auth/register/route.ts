@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
 
   if (name.length < 2) return NextResponse.json({ error: "Name must be at least 2 characters" }, { status: 400 });
   if (!email.includes("@") || email.length < 5) return NextResponse.json({ error: "Valid email required" }, { status: 400 });
-  if (password.length < 10) return NextResponse.json({ error: "Password must be at least 10 characters" }, { status: 400 });
+  if (password.length < 8) return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 });
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) return NextResponse.json({ error: "An account already exists for that email" }, { status: 409 });

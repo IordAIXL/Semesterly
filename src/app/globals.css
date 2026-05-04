@@ -2641,3 +2641,69 @@ button,
 .account-gate-frame.theme-dark .auth-card-copy .subtitle {
   color: #b6c2cf !important;
 }
+
+/* PC/browser fit pass + auth/profile category controls. */
+@media (min-width: 1200px) {
+  .main { max-width: min(1360px, calc(100vw - 260px)); }
+  .dashboard-layout.beginner-layout { grid-template-columns: minmax(0, 1.45fr) minmax(300px, .7fr) !important; }
+  .courses-layout { grid-template-columns: 290px minmax(0, 1fr) !important; }
+  .profile-grid { grid-template-columns: minmax(260px, .85fr) minmax(320px, 1.1fr) minmax(240px, .75fr); }
+}
+.account-gate-frame .auth-mode-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 4px;
+  border: 1px solid #dbe4ef;
+  border-radius: 14px;
+  background: #f8fafc;
+}
+.account-gate-frame .auth-mode-tabs button {
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: transparent;
+  color: #475569;
+  font-weight: 800;
+  cursor: pointer;
+}
+.account-gate-frame .auth-mode-tabs button.active {
+  background: #1f5fbf;
+  color: #fff;
+}
+.account-gate-frame .auth-switch-button { margin-top: 0 !important; }
+.category-chip-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.category-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 7px 10px;
+  background: var(--surface-soft);
+  font-size: 13px;
+  font-weight: 800;
+}
+.category-chip i { width: 10px; height: 10px; border-radius: 999px; }
+.category-chip button {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  padding: 0 0 1px 2px;
+}
+.category-add-row { display: grid; grid-template-columns: minmax(0, 1fr) 52px auto; gap: 8px; }
+.category-add-row input { border: 1px solid var(--line); border-radius: 12px; padding: 10px 11px; background: #fff; color: var(--ink); min-width: 0; }
+.category-add-row input[type="color"] { padding: 4px; height: 42px; }
+.map-link, .inline-map-link { color: var(--blue); font-weight: 800; text-decoration: none; }
+.map-link:hover, .inline-map-link:hover { text-decoration: underline; }
+.map-link { display: inline-flex; margin-top: 8px; }
+.theme-dark .category-add-row input { background: #0f141a; color: var(--ink); border-color: var(--line); }
+.account-gate-frame.theme-dark .auth-mode-tabs { background: #0b1220; border-color: #334155; }
+.account-gate-frame.theme-dark .auth-mode-tabs button { color: #cbd5e1; }
+.account-gate-frame.theme-dark .auth-mode-tabs button.active { background: #8ab4f8; color: #07111f; }
+@media (max-width: 720px) {
+  .category-add-row { grid-template-columns: 1fr; }
+}
