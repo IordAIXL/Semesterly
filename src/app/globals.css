@@ -2998,3 +2998,48 @@ body {
     max-height: calc(100vh - 68px) !important;
   }
 }
+
+/* Alignment correction: keep approved style, but center content inside the space to the right of the sidebar. */
+@media (min-width: 901px) {
+  .app-frame:not(.account-gate-frame) {
+    display: grid !important;
+    grid-template-columns: 220px minmax(0, 1fr) !important;
+    column-gap: 0 !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+  }
+  .topbar {
+    position: sticky !important;
+    inset: 0 auto auto 0 !important;
+    justify-self: start !important;
+    width: 220px !important;
+    max-width: 220px !important;
+    margin: 0 !important;
+  }
+  .main {
+    justify-self: center !important;
+    margin: 0 auto !important;
+    width: min(1180px, 100%) !important;
+    max-width: min(1180px, calc(100vw - 220px)) !important;
+    padding: 24px !important;
+    overflow-x: hidden !important;
+  }
+  .profile-grid.lean-profile-grid {
+    display: grid !important;
+    grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr) minmax(0, .85fr) !important;
+    grid-auto-flow: row !important;
+    align-items: start !important;
+  }
+  .profile-grid.lean-profile-grid .account-panel {
+    grid-column: 1 / 2 !important;
+    grid-row: 2 / 3 !important;
+  }
+}
+@media (min-width: 901px) and (max-width: 1280px) {
+  .main {
+    width: 100% !important;
+    max-width: calc(100vw - 220px) !important;
+    padding: 20px !important;
+  }
+}
