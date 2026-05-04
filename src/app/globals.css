@@ -1524,3 +1524,263 @@ h1 { font-size: 40px; font-weight: 850; letter-spacing: -.045em; }
   .metrics-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .brief-strip { grid-template-columns: 1fr; }
 }
+
+/* Dom cleanup pass: squarer shell, rounded bubbles, no top-right action menu, no vertical label wrapping. */
+.app-frame {
+  background: #f5f7fb;
+}
+.topbar {
+  max-width: 1240px;
+  margin: 18px auto 0;
+  padding: 0 24px;
+  border: 1px solid #e2e8f0;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, .94);
+  box-shadow: 0 12px 34px rgba(15, 23, 42, .06);
+  justify-content: flex-start;
+}
+.topbar-left {
+  width: 100%;
+  min-width: 0;
+  justify-content: space-between;
+  gap: 24px;
+}
+.brand {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+.brand-mark {
+  width: 38px;
+  height: 38px;
+  border-radius: 14px;
+  background: #1f5fbf;
+}
+.topnav {
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: nowrap;
+  gap: 6px;
+  padding: 5px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border-radius: 999px;
+  background: #eef3fb;
+  scrollbar-width: none;
+}
+.topnav::-webkit-scrollbar { display: none; }
+.topnav button,
+button,
+.primary-button,
+.ghost-button,
+.calendar-tabs button,
+.calendar-day-controls button,
+.action-row button,
+.assignment-actions button,
+.add-tabs button,
+.course-select,
+.timer-controls button {
+  white-space: nowrap;
+  writing-mode: horizontal-tb;
+  text-orientation: mixed;
+  word-break: keep-all;
+}
+.topnav button {
+  flex: 0 0 auto;
+  min-width: max-content;
+  padding: 9px 15px;
+  border-radius: 999px;
+}
+.topnav button.active {
+  background: #1f5fbf;
+  color: #fff;
+  box-shadow: none;
+}
+.main {
+  max-width: 1240px;
+}
+.hero-row {
+  align-items: flex-end;
+  margin: 22px 0 18px;
+}
+.hero-row h1 {
+  font-size: clamp(34px, 4vw, 48px);
+  letter-spacing: -.055em;
+}
+.ops-strip {
+  border-radius: 22px;
+  box-shadow: none;
+  border: 1px solid #e5ebf3;
+  background: #fff;
+}
+.ops-strip span,
+.ops-strip strong {
+  white-space: nowrap;
+}
+.dashboard-layout,
+.calendar-layout,
+.courses-layout,
+.profile-grid,
+.course-subgrid,
+.insights-grid {
+  gap: 18px;
+}
+.card,
+.day-card,
+.starter-card,
+.calendar-hero,
+.courses-hero,
+.profile-hero,
+.course-risk-strip,
+.course-detail-hero,
+.account-card,
+.account-gate-frame,
+.next-up-grid > div,
+.priority-item,
+.assignment-row,
+.calendar-cell,
+.calendar-event,
+.agenda-row,
+.course-select,
+.add-menu {
+  border-radius: 22px !important;
+  border: 1px solid #e1e8f0;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, .045);
+}
+.card,
+.day-card,
+.starter-card {
+  background: #fff;
+}
+.beginner-layout {
+  grid-template-columns: minmax(0, 1.7fr) minmax(300px, .9fr);
+}
+.day-card-main {
+  grid-template-columns: minmax(0, 1fr) 120px;
+}
+.load-badge {
+  border-radius: 24px;
+  background: #f0f6ff;
+  color: #174ea6;
+}
+.brief-strip,
+.metrics-row,
+.starter-steps,
+.next-up-grid,
+.form-grid,
+.quick-grid {
+  align-items: stretch;
+}
+.brief-strip > *,
+.metric,
+.starter-steps li,
+.next-up-grid > div {
+  border-radius: 18px;
+}
+.card-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.card-title-row h2,
+.card h2,
+.card p,
+.metric span,
+.metric strong,
+.priority-item strong,
+.priority-item p,
+.assignment-row strong,
+.assignment-row span,
+.calendar-event strong,
+.calendar-event p,
+.agenda-row strong,
+.agenda-row p,
+.trust-list li,
+.trust-list strong,
+.trust-list span {
+  writing-mode: horizontal-tb;
+  text-orientation: mixed;
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+.metric span,
+.card-title-row span,
+.capture-pills span,
+.status-pill,
+.calendar-date span,
+.course-select small {
+  white-space: nowrap;
+}
+.add-dropdown {
+  position: relative;
+}
+.add-dropdown summary {
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.add-menu {
+  right: 0;
+  min-width: min(520px, calc(100vw - 32px));
+}
+.calendar-grid.week,
+.calendar-grid.month {
+  min-width: 0;
+}
+.calendar-grid-head div {
+  white-space: nowrap;
+  text-align: left;
+}
+.calendar-cell {
+  min-width: 0;
+}
+.calendar-event {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr);
+  min-width: 0;
+}
+.calendar-event div,
+.assignment-row div,
+.priority-item div,
+.agenda-row div {
+  min-width: 0;
+}
+.theme-dark .topbar,
+.theme-dark .card,
+.theme-dark .day-card,
+.theme-dark .starter-card,
+.theme-dark .calendar-hero,
+.theme-dark .courses-hero,
+.theme-dark .profile-hero,
+.theme-dark .course-risk-strip,
+.theme-dark .course-detail-hero,
+.theme-dark .account-card,
+.theme-dark .account-gate-frame {
+  border-color: #263244;
+  background: #111827;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .24);
+}
+.theme-dark .topnav { background: #172033; }
+.theme-dark .topnav button.active { background: #8ab4f8; color: #07111f; }
+.theme-dark .load-badge { background: #172a46; color: #d7e7ff; }
+
+@media (max-width: 900px) {
+  .topbar {
+    width: calc(100% - 24px);
+    padding: 12px;
+    height: auto;
+  }
+  .topbar-left {
+    display: grid;
+    gap: 12px;
+  }
+  .topnav {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .beginner-layout {
+    grid-template-columns: 1fr;
+  }
+  .day-card-main {
+    grid-template-columns: 1fr;
+  }
+}

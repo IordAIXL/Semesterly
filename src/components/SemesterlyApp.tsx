@@ -672,10 +672,6 @@ export function SemesterlyApp() {
             ))}
           </nav>
         </div>
-        <div className="topbar-right">
-          <button className="primary-button" onClick={() => setView("calendar")}>+ Calendar item</button>
-          <button className="ghost-button" onClick={() => setView("courses")}>+ Course</button>
-        </div>
       </header>
 
       <main className="main">
