@@ -16,12 +16,21 @@ const workspaceSelect = {
   tasks: { orderBy: { dueAt: "asc" } },
 } as const;
 
+let scheduleCategoriesColumnReady = false;
+
+async function ensureScheduleCategoriesColumn() {
+  if (scheduleCategoriesColumnReady) return;
+  await prisma.$executeRawUnsafe('ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "scheduleCategories" TEXT');
+  scheduleCategoriesColumnReady = true;
+}
+
 async function getScheduleCategories(userId: string) {
   try {
+    await ensureScheduleCategoriesColumn();
     const rows = await prisma.$queryRaw<Array<{ scheduleCategories: string | null }>>`SELECT "scheduleCategories" FROM "User" WHERE id = ${userId} LIMIT 1`;
     return rows[0]?.scheduleCategories ?? null;
   } catch {
-    // Older deployed DBs may not have the column yet. Sign-in should still work.
+    // Sign-in should still work even if the DB temporarily blocks self-healing schema changes.
     return null;
   }
 }
@@ -107,9 +116,10 @@ export async function PATCH(request: NextRequest) {
 
   if (serializedCategories !== undefined) {
     try {
+      await ensureScheduleCategoriesColumn();
       await prisma.$executeRaw`UPDATE "User" SET "scheduleCategories" = ${serializedCategories} WHERE id = ${userId}`;
     } catch {
-      // Keep profile saves non-fatal on older DBs until the migration is applied.
+      return NextResponse.json({ error: "Could not save schedule categories" }, { status: 500 });
     }
   }
 

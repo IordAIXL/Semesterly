@@ -2707,3 +2707,152 @@ button,
 @media (max-width: 720px) {
   .category-add-row { grid-template-columns: 1fr; }
 }
+
+/* PC fit shrink pass: keep desktop windows/cards inside common laptop screens. */
+@media (min-width: 901px) {
+  .app-frame {
+    grid-template-columns: 190px minmax(0, 1fr) !important;
+  }
+  .topbar {
+    padding: 18px 12px !important;
+  }
+  .brand-mark {
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: 11px !important;
+  }
+  .topnav button {
+    padding: 10px 11px !important;
+    border-radius: 12px !important;
+    font-size: 13px !important;
+  }
+  .main {
+    max-width: min(1040px, calc(100vw - 210px)) !important;
+    padding: 18px 18px 34px !important;
+  }
+  .hero-row {
+    margin-bottom: 12px !important;
+  }
+  .hero-row h1,
+  h1 {
+    font-size: clamp(28px, 3vw, 36px) !important;
+  }
+  .subtitle {
+    font-size: 14px !important;
+  }
+  .card,
+  .day-card,
+  .starter-card,
+  .calendar-hero,
+  .courses-hero,
+  .profile-hero,
+  .course-risk-strip,
+  .course-detail-hero {
+    padding: 12px !important;
+    border-radius: 14px !important;
+  }
+  .card h2,
+  .courses-hero h2,
+  .calendar-hero h2,
+  .profile-hero h2 {
+    font-size: 17px !important;
+  }
+  .dashboard-layout.beginner-layout,
+  .beginner-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 280px) !important;
+    gap: 12px !important;
+  }
+  .main-flow,
+  .action-rail,
+  .left-stack,
+  .right-stack,
+  .list-stack,
+  .dashboard-layout .main-flow,
+  .dashboard-layout .action-rail {
+    gap: 10px !important;
+  }
+  .metrics-row,
+  .next-up-grid {
+    gap: 8px !important;
+  }
+  .metric,
+  .assignment-row,
+  .priority-item,
+  .agenda-row,
+  .calendar-event,
+  .course-select,
+  .next-up-grid > div {
+    padding: 10px !important;
+    border-radius: 10px !important;
+  }
+  .day-card-main {
+    grid-template-columns: minmax(0, 1fr) 92px !important;
+  }
+  .load-badge {
+    min-width: 92px !important;
+    min-height: 92px !important;
+    border-radius: 14px !important;
+  }
+  .load-badge strong {
+    font-size: 30px !important;
+  }
+  .courses-layout {
+    grid-template-columns: 230px minmax(0, 1fr) !important;
+    gap: 12px !important;
+  }
+  .course-subgrid {
+    grid-template-columns: minmax(0, 1fr) minmax(240px, .72fr) !important;
+    gap: 12px !important;
+  }
+  .calendar-layout,
+  .calendar-layout.day {
+    grid-template-columns: minmax(0, 1fr) 280px !important;
+    gap: 12px !important;
+  }
+  .calendar-cell {
+    min-height: 92px !important;
+    padding: 8px !important;
+  }
+  .calendar-board {
+    padding-top: 52px !important;
+  }
+  .profile-grid,
+  .profile-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(260px, .72fr) !important;
+    gap: 12px !important;
+  }
+  .add-dropdown.is-open .add-menu,
+  .add-dropdown[data-open="true"] .add-menu,
+  .add-dropdown[open] .add-menu {
+    top: 48px !important;
+    width: min(620px, calc(100vw - 28px)) !important;
+    max-height: calc(100vh - 66px) !important;
+    padding: 12px !important;
+  }
+  .add-menu-with-tools {
+    width: min(620px, calc(100vw - 28px)) !important;
+  }
+  .add-tabs button,
+  .primary-button,
+  .ghost-button,
+  .add-trigger,
+  .add-dropdown summary {
+    min-height: 38px !important;
+    padding: 9px 12px !important;
+    font-size: 13px !important;
+  }
+}
+.account-gate-frame.app-frame {
+  grid-template-columns: 1fr !important;
+}
+@media (min-width: 901px) {
+  .account-gate-frame .account-gate,
+  .account-gate-frame .account-card {
+    width: min(440px, 100%) !important;
+    max-width: 440px !important;
+  }
+  .account-gate-frame .account-card {
+    padding: 18px !important;
+    border-radius: 18px !important;
+  }
+}
