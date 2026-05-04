@@ -2902,3 +2902,15 @@ button,
     max-height: calc(100vh - 68px) !important;
   }
 }
+
+/* Profile: keep Account/sign-out directly under Name. */
+.profile-stack {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+@media (max-width: 1100px) {
+  .profile-stack {
+    gap: 14px;
+  }
+}

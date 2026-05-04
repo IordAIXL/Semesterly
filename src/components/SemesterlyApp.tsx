@@ -968,10 +968,17 @@ function ProfilePage({
       </article>
 
       <div className="profile-grid lean-profile-grid">
-        <article className="card profile-panel">
-          <div className="card-title-row"><h2>Name</h2></div>
-          <NameEditor name={student.name} onSave={updateProfileName} />
-        </article>
+        <div className="profile-stack">
+          <article className="card profile-panel">
+            <div className="card-title-row"><h2>Name</h2></div>
+            <NameEditor name={student.name} onSave={updateProfileName} />
+          </article>
+
+          <article className="card profile-panel">
+            <div className="card-title-row"><h2>Account</h2></div>
+            <button className="ghost-button full-width" onClick={logout}>Sign out</button>
+          </article>
+        </div>
 
         <article className="card profile-panel">
           <div className="card-title-row"><h2>Preferences</h2></div>
@@ -983,11 +990,6 @@ function ProfilePage({
         </article>
 
         <CategoryEditor categories={scheduleCategories} onSave={updateScheduleCategories} />
-
-        <article className="card profile-panel">
-          <div className="card-title-row"><h2>Account</h2></div>
-          <button className="ghost-button full-width" onClick={logout}>Sign out</button>
-        </article>
       </div>
     </section>
   );
