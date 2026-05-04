@@ -207,12 +207,11 @@ export function SemesterlyApp() {
   const todaysSchedule = sortedSchedule.filter((event) => isSameDay(parseISO(event.startsAt), selectedDate));
   const dayLoad = activeTasks.length + todaysSchedule.length;
   const dayTone = dayLoad >= 8 ? "Heavy" : dayLoad >= 5 ? "Focused" : "Light";
-  const topTask = priorities[0];
   const focusMinutes = activeTasks.reduce((sum, task) => sum + task.estimatedMinutes, 0);
   const dueSoon = [...activeTasks]
     .sort((a, b) => a.dueAt.localeCompare(b.dueAt))
     .slice(0, 5);
-  const nextEvent = todaysSchedule.find((event) => parseISO(event.endsAt) > new Date()) ?? todaysSchedule[0];
+  const upcomingEvents = sortedSchedule.filter((event) => parseISO(event.endsAt) > new Date()).slice(0, 5);
   const focusPlan = priorities.slice(0, 3);
   const recommendations = buildRecommendations(tasks, courses);
   const weekMinutes = activeTasks.reduce((sum, task) => sum + task.estimatedMinutes, 0);
@@ -679,18 +678,13 @@ export function SemesterlyApp() {
         <section className="hero-row">
           <div>
             <p className="eyebrow">{format(selectedDate, "EEEE, MMMM d")}</p>
-            <h1>{view === "dashboard" ? "Your day" : view === "calendar" ? "Calendar" : view === "courses" ? "Courses" : view === "profile" ? "Profile" : "Admin"}</h1>
+            <h1>{view === "dashboard" ? "Today" : view === "calendar" ? "Calendar" : view === "courses" ? "Courses" : view === "profile" ? "Profile" : "Admin"}</h1>
           </div>
         </section>
 
         {view === "dashboard" && (
           <section className="dashboard-layout beginner-layout">
             <div className="left-stack main-flow">
-              <ScheduleCard schedule={todaysSchedule.length ? todaysSchedule : sortedSchedule.slice(0, 5)} courses={courses} title={todaysSchedule.length ? "Today, in order" : "Next calendar items"} />
-              <NextUpCard nextEvent={nextEvent} topTask={topTask} />
-            </div>
-
-            <div className="right-stack action-rail">
               <div className="dashboard-add-row">
                 <AddDropdown
                   courses={courses}
@@ -709,6 +703,11 @@ export function SemesterlyApp() {
                 />
               </div>
               <PriorityCard priorities={priorities} onDone={(id) => updateTaskStatus(id, "DONE")} onStart={(id) => updateTaskStatus(id, "IN_PROGRESS")} onSnooze={snoozeTask} onDelete={deleteTask} />
+              <NextUpCard events={upcomingEvents} />
+            </div>
+
+            <div className="right-stack action-rail">
+              <ScheduleCard schedule={todaysSchedule} courses={courses} title="Today, in order" />
               {focusBreaksEnabled && <StudyTimerCard tasks={priorities} breakMinutes={focusBreakMinutes} />}
             </div>
           </section>
@@ -1066,7 +1065,6 @@ function CoursesPage({
           <p>{highestRisk?.nextTask ? highestRisk.nextTask.title : "No open work"}</p>
         </div>
         <div className="course-action-buttons">
-          {highestRisk && <button className="primary-button" onClick={() => setSelectedCourseId(highestRisk.course.id)}>Open course</button>}
           <AddDropdown
             courses={courses}
             selectedCourse={selectedCourse}
@@ -1518,21 +1516,21 @@ function AdminPanel({
   );
 }
 
-function NextUpCard({ nextEvent, topTask }: { nextEvent?: ScheduleEvent; topTask?: ReturnType<typeof prioritizeTasks>[number] }) {
+function NextUpCard({ events }: { events: ScheduleEvent[] }) {
   return (
     <article className="card next-up-card">
-      <div className="card-title-row"><h2>Next up</h2></div>
-      <div className="next-up-grid">
-        <div>
-          <p className="label">Schedule</p>
-          <strong>{nextEvent?.title ?? "No event queued"}</strong>
-          <span>{nextEvent ? `${format(parseISO(nextEvent.startsAt), "h:mm a")}–${format(parseISO(nextEvent.endsAt), "h:mm a")}` : "Your calendar is open."}</span>
-        </div>
-        <div>
-          <p className="label">Focus</p>
-          <strong>{topTask?.title ?? "No task selected"}</strong>
-          <span>{topTask ? `${minutesLabel(topTask.estimatedMinutes)} · score ${topTask.score}` : "Add an assignment to build a queue."}</span>
-        </div>
+      <div className="card-title-row"><h2>Upcoming calendar events</h2></div>
+      <div className="calendar-agenda compact-agenda">
+        {events.length === 0 && <p className="empty">No upcoming calendar events.</p>}
+        {events.map((event) => (
+          <div className="agenda-row" key={event.id}>
+            <span className="event-color" style={{ background: eventCategoryColor(event.category) }} />
+            <div>
+              <strong>{event.title}</strong>
+              <p>{format(parseISO(event.startsAt), "EEE, MMM d · h:mm a")}–{format(parseISO(event.endsAt), "h:mm a")}</p>
+            </div>
+          </div>
+        ))}
       </div>
     </article>
   );
