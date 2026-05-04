@@ -797,7 +797,7 @@ function Metric({ label, value }: { label: string; value: string | number }) {
 
 function AccountLoading({ theme }: { theme: "light" | "dark" }) {
   return (
-    <div className="app-frame account-gate-frame">
+    <div className={`app-frame account-gate-frame ${theme === "dark" ? "theme-dark" : ""}`}>
       <main className="account-gate loading-gate">
         <section className="card account-card loading-card">
           <div className="brand account-brand"><span className="brand-mark">S</span> Semesterly</div>
@@ -836,22 +836,22 @@ function AccountGate({
   createAccount: () => void;
 }) {
   return (
-    <div className="app-frame account-gate-frame">
+    <div className={`app-frame account-gate-frame ${theme === "dark" ? "theme-dark" : ""}`}>
       <main className="account-gate">
         <section className="account-gate-copy">
           <div className="brand account-brand"><span className="brand-mark">S</span> Semesterly</div>
           <p className="eyebrow">Private student workspace</p>
-          <h1>Create your account first.</h1>
-          <p className="subtitle">Semesterly keeps classes, assignments, calendar items, and study plans inside your own secure account. After this, you’ll add courses and coursework.</p>
+          <h1>Sign in or create your account.</h1>
+          <p className="subtitle">Semesterly keeps classes, assignments, calendar items, and study plans inside your own secure account. Sign in if you already have one, or create a new private workspace.</p>
           <div className="onboarding-steps" aria-label="Setup steps">
-            <div><strong>1</strong><span>Create private account</span></div>
+            <div><strong>1</strong><span>Sign in or create account</span></div>
             <div><strong>2</strong><span>Add classes</span></div>
             <div><strong>3</strong><span>Add assignments and exams</span></div>
           </div>
         </section>
 
-        <section className="card account-card" aria-label="Create account">
-          <div className="card-title-row"><h2>Start Semesterly</h2></div>
+        <section className="card account-card" aria-label="Sign in or create account">
+          <div className="card-title-row"><h2>Access Semesterly</h2></div>
           <label className="setting-row"><span>Name</span><input value={signupName} onChange={(event) => setSignupName(event.target.value)} placeholder="Your name" type="text" /></label>
           <label className="setting-row"><span>Email</span><input value={loginEmail} onChange={(event) => setLoginEmail(event.target.value)} placeholder="you@example.com" type="email" /></label>
           <label className="setting-row"><span>Password</span><input value={loginPassword} onChange={(event) => setLoginPassword(event.target.value)} placeholder="At least 10 characters" type="password" /></label>

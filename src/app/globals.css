@@ -2412,3 +2412,178 @@ button,
     max-height: calc(100vh - 68px) !important;
   }
 }
+
+/* Account gate must not inherit the app shell/sidebar grid. */
+.account-gate-frame.app-frame {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  place-items: center !important;
+  min-height: 100vh !important;
+  padding: clamp(18px, 4vw, 48px) !important;
+  background:
+    radial-gradient(circle at 14% 10%, rgba(31, 95, 191, .12), transparent 28%),
+    linear-gradient(180deg, #f6f8fb 0%, #edf3fb 100%) !important;
+  color: #18202b !important;
+}
+.account-gate-frame .account-gate {
+  width: min(1040px, 100%) !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 430px) !important;
+  gap: clamp(18px, 3vw, 32px) !important;
+  align-items: center !important;
+}
+.account-gate-frame .account-gate-copy,
+.account-gate-frame .account-card,
+.account-gate-frame .loading-card {
+  min-width: 0 !important;
+  color: #18202b !important;
+}
+.account-gate-frame .account-gate-copy h1,
+.account-gate-frame .loading-card h1 {
+  color: #111827 !important;
+  font-size: clamp(42px, 6vw, 72px) !important;
+  line-height: .96 !important;
+  letter-spacing: -.06em !important;
+  max-width: 760px !important;
+  overflow-wrap: normal !important;
+}
+.account-gate-frame .subtitle,
+.account-gate-frame .onboarding-steps div,
+.account-gate-frame .muted-copy,
+.account-gate-frame .fine-print {
+  color: #4b5563 !important;
+  line-height: 1.5 !important;
+  white-space: normal !important;
+}
+.account-gate-frame .account-brand,
+.account-gate-frame .eyebrow,
+.account-gate-frame label,
+.account-gate-frame label span,
+.account-gate-frame .divider {
+  color: #334155 !important;
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+  white-space: normal !important;
+}
+.account-gate-frame .account-card {
+  background: #ffffff !important;
+  border: 1px solid #dbe4ef !important;
+  border-radius: 24px !important;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, .12) !important;
+  padding: clamp(20px, 3vw, 30px) !important;
+  gap: 14px !important;
+}
+.account-gate-frame .card-title-row h2 {
+  color: #111827 !important;
+  white-space: normal !important;
+}
+.account-gate-frame input {
+  width: 100% !important;
+  min-height: 48px !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 12px !important;
+  background: #ffffff !important;
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+}
+.account-gate-frame input::placeholder {
+  color: #64748b !important;
+  -webkit-text-fill-color: #64748b !important;
+}
+.account-gate-frame .primary-button,
+.account-gate-frame .ghost-button {
+  width: 100% !important;
+  min-height: 48px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 12px !important;
+  font-weight: 850 !important;
+  white-space: normal !important;
+}
+.account-gate-frame .primary-button {
+  background: #1f5fbf !important;
+  color: #ffffff !important;
+}
+.account-gate-frame .ghost-button {
+  background: #f8fafc !important;
+  color: #1e293b !important;
+  border-color: #cbd5e1 !important;
+}
+.account-gate-frame .divider::before,
+.account-gate-frame .divider::after {
+  background: #dbe4ef !important;
+}
+:root[data-theme="dark"] .account-gate-frame.app-frame,
+.account-gate-frame.theme-dark {
+  background:
+    radial-gradient(circle at 14% 10%, rgba(138, 180, 248, .16), transparent 28%),
+    linear-gradient(180deg, #0f172a 0%, #111827 100%) !important;
+  color: #e5eefb !important;
+}
+:root[data-theme="dark"] .account-gate-frame .account-card,
+.account-gate-frame.theme-dark .account-card,
+:root[data-theme="dark"] .account-gate-frame .loading-card,
+.account-gate-frame.theme-dark .loading-card {
+  background: #111827 !important;
+  border-color: #263244 !important;
+  color: #e5eefb !important;
+}
+:root[data-theme="dark"] .account-gate-frame .account-gate-copy h1,
+.account-gate-frame.theme-dark .account-gate-copy h1,
+:root[data-theme="dark"] .account-gate-frame .loading-card h1,
+.account-gate-frame.theme-dark .loading-card h1,
+:root[data-theme="dark"] .account-gate-frame .card-title-row h2,
+.account-gate-frame.theme-dark .card-title-row h2 {
+  color: #f8fafc !important;
+}
+:root[data-theme="dark"] .account-gate-frame .subtitle,
+:root[data-theme="dark"] .account-gate-frame .onboarding-steps div,
+:root[data-theme="dark"] .account-gate-frame .fine-print,
+.account-gate-frame.theme-dark .subtitle,
+.account-gate-frame.theme-dark .onboarding-steps div,
+.account-gate-frame.theme-dark .fine-print {
+  color: #b6c2cf !important;
+}
+:root[data-theme="dark"] .account-gate-frame label,
+:root[data-theme="dark"] .account-gate-frame label span,
+:root[data-theme="dark"] .account-gate-frame .account-brand,
+:root[data-theme="dark"] .account-gate-frame .eyebrow,
+:root[data-theme="dark"] .account-gate-frame .divider,
+.account-gate-frame.theme-dark label,
+.account-gate-frame.theme-dark label span,
+.account-gate-frame.theme-dark .account-brand,
+.account-gate-frame.theme-dark .eyebrow,
+.account-gate-frame.theme-dark .divider {
+  color: #cbd5e1 !important;
+}
+:root[data-theme="dark"] .account-gate-frame input,
+.account-gate-frame.theme-dark input {
+  background: #0b1220 !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+  -webkit-text-fill-color: #f8fafc !important;
+}
+:root[data-theme="dark"] .account-gate-frame .ghost-button,
+.account-gate-frame.theme-dark .ghost-button {
+  background: #182233 !important;
+  color: #e5eefb !important;
+  border-color: #334155 !important;
+}
+@media (max-width: 820px) {
+  .account-gate-frame.app-frame {
+    place-items: start center !important;
+    padding: 16px !important;
+  }
+  .account-gate-frame .account-gate {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  .account-gate-frame .account-gate-copy h1,
+  .account-gate-frame .loading-card h1 {
+    font-size: clamp(36px, 12vw, 50px) !important;
+  }
+  .account-gate-frame .account-card {
+    padding: 18px !important;
+  }
+}
