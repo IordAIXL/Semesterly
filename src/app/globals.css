@@ -1939,3 +1939,160 @@ button,
     display: block;
   }
 }
+
+/* Dom-directed layout pass: profile name, course actions, calendar board controls, dashboard content. */
+.profile-hero {
+  justify-content: flex-start !important;
+  gap: 10px !important;
+  padding: 14px 16px !important;
+}
+.profile-hero .profile-avatar {
+  width: 54px !important;
+  height: 54px !important;
+  border-radius: 14px !important;
+}
+.profile-hero h2 {
+  margin: 0 !important;
+  line-height: 1 !important;
+}
+.course-action-strip {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 14px !important;
+  background: #fff !important;
+  border-color: #dce5f2 !important;
+}
+.course-action-strip h2 { margin: 0 !important; }
+.course-action-strip p { margin: 4px 0 0 !important; }
+.course-action-buttons {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  gap: 10px;
+}
+.course-action-buttons .primary-button,
+.course-action-buttons .add-dropdown summary {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 128px !important;
+  min-height: 42px !important;
+  padding: 10px 16px !important;
+  border-radius: 10px !important;
+  font-size: 14px !important;
+  line-height: 1 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+}
+.inline-add-dropdown { justify-self: end !important; }
+.course-tools-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+.calendar-layout,
+.calendar-layout.day {
+  grid-template-columns: minmax(0, 1fr) 320px !important;
+}
+.calendar-board {
+  position: relative;
+  padding-top: 62px !important;
+}
+.calendar-board-actions {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+  z-index: 1;
+}
+.calendar-board-actions button {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--muted);
+  border-radius: 9px;
+  padding: 9px 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.calendar-board-actions button:hover {
+  background: var(--blue);
+  color: #fff;
+  border-color: var(--blue);
+}
+.calendar-form-stack article + article { display: none !important; }
+.dashboard-layout.beginner-layout,
+.beginner-layout {
+  grid-template-columns: minmax(0, 1fr) 320px !important;
+}
+.dashboard-layout .main-flow {
+  display: grid;
+  gap: 14px;
+}
+.dashboard-layout .action-rail {
+  display: grid;
+  gap: 14px;
+}
+@media (max-width: 980px) {
+  .course-action-strip,
+  .course-action-buttons,
+  .course-tools-grid,
+  .calendar-layout,
+  .calendar-layout.day,
+  .dashboard-layout.beginner-layout,
+  .beginner-layout {
+    grid-template-columns: 1fr !important;
+  }
+  .course-action-buttons .primary-button,
+  .course-action-buttons .add-dropdown summary {
+    width: 100% !important;
+  }
+  .calendar-board-actions {
+    position: static;
+    margin-bottom: 10px;
+    justify-content: flex-start;
+  }
+  .calendar-board {
+    padding-top: 14px !important;
+  }
+}
+.theme-dark .course-action-strip,
+.theme-dark .calendar-board-actions button {
+  background: var(--surface) !important;
+  border-color: var(--line) !important;
+}
+.calendar-board > .calendar-day-controls {
+  position: absolute !important;
+  top: 14px !important;
+  right: 14px !important;
+  display: flex !important;
+  gap: 8px !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  z-index: 1 !important;
+}
+.calendar-board > .calendar-day-controls button {
+  border: 1px solid var(--line) !important;
+  background: #fff !important;
+  color: var(--muted) !important;
+  border-radius: 9px !important;
+  padding: 9px 13px !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+}
+.calendar-board > .calendar-day-controls button:hover {
+  background: var(--blue) !important;
+  color: #fff !important;
+  border-color: var(--blue) !important;
+}
+@media (max-width: 980px) {
+  .calendar-board > .calendar-day-controls {
+    position: static !important;
+    margin-bottom: 10px !important;
+    justify-content: flex-start !important;
+  }
+}

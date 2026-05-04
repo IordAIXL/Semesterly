@@ -343,8 +343,8 @@ export function SemesterlyApp() {
     }
 
     setSmartInput("");
-    setActionNotice(`Captured ${parsedTasks.length} task${parsedTasks.length === 1 ? "" : "s"} and rebuilt Today.`);
-    setView("dashboard");
+    setActionNotice(`Captured ${parsedTasks.length} task${parsedTasks.length === 1 ? "" : "s"}.`);
+    setView("courses");
   }
 
   async function addTask(destination: View = "dashboard") {
@@ -686,30 +686,11 @@ export function SemesterlyApp() {
         {view === "dashboard" && (
           <section className="dashboard-layout beginner-layout">
             <div className="left-stack main-flow">
-              <article className="card day-card primary-focus-card">
-                <div className="day-card-main">
-                  <div>
-                    <p className="eyebrow">{studentProfile.name}</p>
-                    <h2>{topTask ? topTask.title : "Add your first class or assignment"}</h2>
-                    <p>{topTask ? topTask.reason : "Start with Courses or Quick add."}</p>
-                  </div>
-                  <div className="load-badge"><span>Today</span><strong>{dayLoad}</strong><small>items</small></div>
-                </div>
-                <div className="metrics-row">
-                  <Metric label="Classes" value={courses.length} />
-                  <Metric label="Need doing" value={activeTasks.length} />
-                  <Metric label="Time estimate" value={minutesLabel(focusMinutes)} />
-                  <Metric label="Finished" value={completedTasks.length} />
-                </div>
-              </article>
-
               <ScheduleCard schedule={todaysSchedule.length ? todaysSchedule : sortedSchedule.slice(0, 5)} courses={courses} title={todaysSchedule.length ? "Today, in order" : "Next calendar items"} />
               <NextUpCard nextEvent={nextEvent} topTask={topTask} />
             </div>
 
             <div className="right-stack action-rail">
-              <QuickAdd taskDraft={taskDraft} setTaskDraft={setTaskDraft} addTask={addTask} courses={courses} />
-              <SmartCaptureCard value={smartInput} setValue={setSmartInput} addSmartTask={addSmartTask} />
               <PriorityCard priorities={priorities} onDone={(id) => updateTaskStatus(id, "DONE")} onStart={(id) => updateTaskStatus(id, "IN_PROGRESS")} onSnooze={snoozeTask} onDelete={deleteTask} />
               {focusBreaksEnabled && <StudyTimerCard tasks={priorities} breakMinutes={focusBreakMinutes} />}
             </div>
@@ -734,6 +715,9 @@ export function SemesterlyApp() {
             addEvent={addEvent}
             updateTaskStatus={updateTaskStatus}
             deleteTask={deleteTask}
+            smartInput={smartInput}
+            setSmartInput={setSmartInput}
+            addSmartTask={addSmartTask}
           />
         )}
 
@@ -888,7 +872,6 @@ function ProfilePage({
       <article className="card profile-hero">
         <div className="profile-avatar">{student.name.split(" ").map((part) => part[0]).join("").slice(0, 2)}</div>
         <div>
-          <p className="eyebrow">Profile</p>
           <h2>{student.name}</h2>
         </div>
       </article>
@@ -946,6 +929,9 @@ function CoursesPage({
   addEvent,
   updateTaskStatus,
   deleteTask,
+  smartInput,
+  setSmartInput,
+  addSmartTask,
 }: {
   courses: Course[];
   tasks: Task[];
@@ -963,6 +949,9 @@ function CoursesPage({
   addEvent: (destination?: View) => void;
   updateTaskStatus: (id: string, status: TaskStatus) => void;
   deleteTask: (id: string) => void;
+  smartInput: string;
+  setSmartInput: (value: string) => void;
+  addSmartTask: () => void;
 }) {
   const [addPanel, setAddPanel] = useState<"course" | "assignment" | "exam" | "event">("course");
   const selectedCourse = courses.find((course) => course.id === selectedCourseId) ?? courses[0];
@@ -1001,39 +990,36 @@ function CoursesPage({
 
   return (
     <section className="courses-page">
-      <article className="card courses-hero">
+      <article className="card course-risk-strip course-action-strip">
         <div>
-          <p className="eyebrow">Courses</p>
-          <h2>Classes, work, exams, and course-level planning.</h2>
+          <h2>{highestRisk ? highestRisk.course.code : "Courses"}</h2>
+          <p>{highestRisk?.nextTask ? highestRisk.nextTask.title : "No open work"}</p>
         </div>
-        <details className="add-dropdown">
-          <summary>Add course</summary>
-          <div className="add-menu">
-            <div className="add-tabs">
-              {(["course", "assignment", "exam", "event"] as const).map((item) => <button key={item} className={addPanel === item ? "active" : ""} onClick={() => {
-                setAddPanel(item);
-                if (item === "assignment" || item === "exam") setTaskDraft({ ...taskDraft, courseId: selectedCourse?.id ?? taskDraft.courseId, title: item === "exam" ? "Exam" : taskDraft.title, importance: item === "exam" ? 5 : taskDraft.importance, estimatedMinutes: item === "exam" ? 180 : taskDraft.estimatedMinutes });
-                if (item === "event") setEventDraft({ ...eventDraft, title: selectedCourse ? `${selectedCourse.code} class` : eventDraft.title, category: "CLASS", courseId: selectedCourse?.id ?? eventDraft.courseId });
-              }}>{item === "event" ? "Calendar" : item[0].toUpperCase() + item.slice(1)}</button>)}
+        <div className="course-action-buttons">
+          {highestRisk && <button className="primary-button" onClick={() => setSelectedCourseId(highestRisk.course.id)}>Open course</button>}
+          <details className="add-dropdown">
+            <summary>Add course</summary>
+            <div className="add-menu">
+              <div className="add-tabs">
+                {(["course", "assignment", "exam", "event"] as const).map((item) => <button key={item} className={addPanel === item ? "active" : ""} onClick={() => {
+                  setAddPanel(item);
+                  if (item === "assignment" || item === "exam") setTaskDraft({ ...taskDraft, courseId: selectedCourse?.id ?? taskDraft.courseId, title: item === "exam" ? "Exam" : taskDraft.title, importance: item === "exam" ? 5 : taskDraft.importance, estimatedMinutes: item === "exam" ? 180 : taskDraft.estimatedMinutes });
+                  if (item === "event") setEventDraft({ ...eventDraft, title: selectedCourse ? `${selectedCourse.code} class` : eventDraft.title, category: "CLASS", courseId: selectedCourse?.id ?? eventDraft.courseId });
+                }}>{item === "event" ? "Calendar" : item[0].toUpperCase() + item.slice(1)}</button>)}
+              </div>
+              {addPanel === "course" && <CourseForm courseDraft={courseDraft} setCourseDraft={setCourseDraft} addCourse={addCourse} />}
+              {addPanel === "assignment" && <TaskForm taskDraft={taskDraft} setTaskDraft={setTaskDraft} addTask={() => addTask("courses")} courses={courses} />}
+              {addPanel === "exam" && <TaskForm taskDraft={{ ...taskDraft, title: taskDraft.title || "Exam", importance: 5, estimatedMinutes: Math.max(taskDraft.estimatedMinutes, 180), courseId: taskDraft.courseId || selectedCourse?.id || "" }} setTaskDraft={setTaskDraft} addTask={() => addTask("courses")} courses={courses} />}
+              {addPanel === "event" && <EventForm eventDraft={eventDraft} setEventDraft={setEventDraft} addEvent={() => addEvent("courses")} courses={courses} />}
             </div>
-            {addPanel === "course" && <CourseForm courseDraft={courseDraft} setCourseDraft={setCourseDraft} addCourse={addCourse} />}
-            {addPanel === "assignment" && <TaskForm taskDraft={taskDraft} setTaskDraft={setTaskDraft} addTask={() => addTask("courses")} courses={courses} />}
-            {addPanel === "exam" && <TaskForm taskDraft={{ ...taskDraft, title: taskDraft.title || "Exam", importance: 5, estimatedMinutes: Math.max(taskDraft.estimatedMinutes, 180), courseId: taskDraft.courseId || selectedCourse?.id || "" }} setTaskDraft={setTaskDraft} addTask={() => addTask("courses")} courses={courses} />}
-            {addPanel === "event" && <EventForm eventDraft={eventDraft} setEventDraft={setEventDraft} addEvent={() => addEvent("courses")} courses={courses} />}
-          </div>
-        </details>
+          </details>
+        </div>
       </article>
 
-      {highestRisk && (
-        <article className="card course-risk-strip">
-          <div>
-            <p className="eyebrow">Courses</p>
-            <h2>{highestRisk.course.code} needs the most attention.</h2>
-            <p>{highestRisk.nextTask ? `${highestRisk.nextTask.title} is next, with ${minutesLabel(highestRisk.minutes)} open across the course.` : "No open course work right now."}</p>
-          </div>
-          <button className="primary-button" onClick={() => setSelectedCourseId(highestRisk.course.id)}>Open course</button>
-        </article>
-      )}
+      <section className="course-tools-grid">
+        <QuickAdd taskDraft={taskDraft} setTaskDraft={setTaskDraft} addTask={() => addTask("courses")} courses={courses} />
+        <SmartCaptureCard value={smartInput} setValue={setSmartInput} addSmartTask={addSmartTask} />
+      </section>
 
       <section className="courses-layout">
         <aside className="course-sidebar">
@@ -1149,12 +1135,6 @@ function CalendarPage({
           <h2>{mode === "semester" ? `${format(selectedDate, "MMM yyyy")} semester` : format(selectedDate, mode === "month" ? "MMMM yyyy" : "EEEE, MMMM d")}</h2>
         </div>
         <div className="calendar-controls">
-          {mode === "day" && (
-            <div className="calendar-day-controls" aria-label="Day navigation">
-              <button onClick={() => setSelectedDate((date) => addDays(date, -1))}>Back</button>
-              <button onClick={() => setSelectedDate((date) => addDays(date, 1))}>Next</button>
-            </div>
-          )}
           <div className="calendar-tabs" role="tablist" aria-label="Calendar view">
             {(["day", "week", "month", "semester"] as CalendarMode[]).map((item) => (
               <button key={item} className={mode === item ? "active" : ""} onClick={() => setMode(item)}>{item[0].toUpperCase() + item.slice(1)}</button>
@@ -1173,6 +1153,12 @@ function CalendarPage({
       ) : (
         <section className={mode === "day" ? "calendar-layout day" : "calendar-layout"}>
           <article className="card calendar-board">
+            {mode === "day" && (
+              <div className="calendar-day-controls" aria-label="Day navigation">
+                <button onClick={() => setSelectedDate((date) => addDays(date, -1))}>Back</button>
+                <button onClick={() => setSelectedDate((date) => addDays(date, 1))}>Next</button>
+              </div>
+            )}
             <div className="calendar-grid-head">
               {(mode === "day" ? [selectedDate] : Array.from({ length: 7 }, (_, index) => addDays(startOfWeek(selectedDate), index))).map((day) => (
                 <div key={day.toISOString()}>{format(day, "EEE")}</div>
@@ -1200,12 +1186,8 @@ function CalendarPage({
             </div>
           </article>
 
-          <div className="right-stack">
+          <div className="right-stack calendar-form-stack">
             <EventForm eventDraft={eventDraft} setEventDraft={setEventDraft} addEvent={addEvent} courses={courses} />
-            <article className="card">
-              <div className="card-title-row"><h2>{mode[0].toUpperCase() + mode.slice(1)} agenda</h2></div>
-              <CalendarAgenda events={visibleEvents} courses={courses} />
-            </article>
           </div>
         </section>
       )}
