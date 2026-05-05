@@ -1,7 +1,7 @@
 "use client";
 
 import { addDays, differenceInCalendarDays, endOfMonth, endOfWeek, format, isSameDay, isSameMonth, isToday, parseISO, startOfMonth, startOfWeek } from "date-fns";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { allSampleStudents, defaultStudent } from "@/lib/sample-users";
 import { parseTaskInput } from "@/lib/natural-language";
@@ -9,7 +9,7 @@ import { prioritizeTasks } from "@/lib/priority";
 import { buildRecommendations } from "@/lib/recommendations";
 import type { Course, ScheduleEvent, Task, TaskStatus } from "@/lib/types";
 
-type View = "dashboard" | "calendar" | "courses" | "profile" | "admin";
+type View = "dashboard" | "calendar" | "courses" | "assignments" | "profile" | "admin";
 type CalendarMode = "day" | "week" | "month" | "semester";
 
 type DraftTask = {
@@ -65,6 +65,8 @@ type StudentProfile = {
   year?: string | null;
   major?: string | null;
   scheduleCategories?: ScheduleCategory[];
+  assignmentTrackerEnabled?: boolean;
+  assignmentHighlightColor?: string;
 };
 
 const STORAGE_KEY = "semesterly.mvp.state.v2";
@@ -88,6 +90,8 @@ const defaultCourse: DraftCourse = {
   importance: 3,
   location: "",
 };
+
+const defaultAssignmentHighlightColor = "#ffe45c";
 
 const defaultEvent: DraftEvent = {
   title: "",
@@ -116,6 +120,15 @@ function statusLabel(status: TaskStatus) {
   return "Done";
 }
 
+function viewLabel(view: View, title = false) {
+  if (view === "dashboard") return title ? "Today" : "Dashboard";
+  if (view === "calendar") return "Calendar";
+  if (view === "courses") return "Courses";
+  if (view === "assignments") return "Assignments";
+  if (view === "profile") return "Profile";
+  return "Admin";
+}
+
 function priorityLabel(importance: number) {
   if (importance >= 5) return "High";
   if (importance <= 2) return "Low";
@@ -131,6 +144,11 @@ function assignmentType(title: string) {
   if (normalized.includes("quiz")) return "Quiz";
   if (normalized.includes("read")) return "Reading";
   return "Assignment";
+}
+
+function isFeaturedAssignment(title: string) {
+  const type = assignmentType(title);
+  return type === "Exam" || type === "Project";
 }
 
 const defaultScheduleCategories: ScheduleCategory[] = [
@@ -201,7 +219,7 @@ export function SemesterlyApp() {
   const [view, setView] = useState<View>("dashboard");
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [studentId, setStudentId] = useState(defaultStudent.id);
-  const [studentProfile, setStudentProfile] = useState<StudentProfile>({ name: defaultStudent.name, school: defaultStudent.school, year: defaultStudent.year, major: defaultStudent.major, scheduleCategories: defaultScheduleCategories });
+  const [studentProfile, setStudentProfile] = useState<StudentProfile>({ name: defaultStudent.name, school: defaultStudent.school, year: defaultStudent.year, major: defaultStudent.major, scheduleCategories: defaultScheduleCategories, assignmentTrackerEnabled: false, assignmentHighlightColor: defaultAssignmentHighlightColor });
   const [courses, setCourses] = useState<Course[]>(defaultStudent.courses);
   const [tasks, setTasks] = useState<Task[]>(defaultStudent.tasks);
   const [schedule, setSchedule] = useState<ScheduleEvent[]>(defaultStudent.schedule);
@@ -272,6 +290,9 @@ export function SemesterlyApp() {
   const focusPlan = priorities.slice(0, 3);
   const recommendations = buildRecommendations(tasks, courses);
   const scheduleCategories = studentProfile.scheduleCategories ?? defaultScheduleCategories;
+  const assignmentTrackerEnabled = Boolean(studentProfile.assignmentTrackerEnabled);
+  const assignmentHighlightColor = studentProfile.assignmentHighlightColor ?? defaultAssignmentHighlightColor;
+  const moduleViews = (["dashboard", "calendar", "courses", ...(assignmentTrackerEnabled ? ["assignments" as View] : []), "profile", ...(adminUnlocked ? ["admin" as View] : [])] as View[]);
   const weekMinutes = activeTasks.reduce((sum, task) => sum + task.estimatedMinutes, 0);
   const courseLoads = courses.map((course) => ({
     course,
@@ -280,7 +301,7 @@ export function SemesterlyApp() {
   })).sort((a, b) => b.minutes - a.minutes);
 
   function applyApiStudent(user: ApiStudent) {
-    setStudentProfile({ name: user.name, school: user.school, year: user.year, major: user.major, scheduleCategories: parseScheduleCategories(user.scheduleCategories) });
+    setStudentProfile((profile) => ({ ...profile, name: user.name, school: user.school, year: user.year, major: user.major, scheduleCategories: parseScheduleCategories(user.scheduleCategories) }));
     setCourses(user.courses.map((course) => ({ id: course.id, code: course.code, name: course.name, color: course.color, importance: course.importance, location: course.location })));
     setTasks(user.tasks.map(mapTask));
     setSchedule(user.events.map(mapEvent));
@@ -289,7 +310,7 @@ export function SemesterlyApp() {
 
   function applyLocalStudent(id: string, initial = false) {
     const fallback = allSampleStudents.find((student) => student.id === id) ?? defaultStudent;
-    setStudentProfile({ name: fallback.name, school: fallback.school, year: fallback.year, major: fallback.major, scheduleCategories: defaultScheduleCategories });
+    setStudentProfile((profile) => ({ ...profile, name: fallback.name, school: fallback.school, year: fallback.year, major: fallback.major, scheduleCategories: defaultScheduleCategories, assignmentTrackerEnabled: profile.assignmentTrackerEnabled ?? false, assignmentHighlightColor: profile.assignmentHighlightColor ?? defaultAssignmentHighlightColor }));
     const saved = initial ? window.localStorage.getItem(STORAGE_KEY) : null;
     if (saved) {
       try {
@@ -515,7 +536,7 @@ export function SemesterlyApp() {
           method: "PATCH",
           body: JSON.stringify({ name: nextName }),
         });
-        setStudentProfile({ name: body.user.name, school: body.user.school, year: body.user.year, major: body.user.major, scheduleCategories: parseScheduleCategories(body.user.scheduleCategories) });
+        setStudentProfile((profile) => ({ ...profile, name: body.user.name, school: body.user.school, year: body.user.year, major: body.user.major, scheduleCategories: parseScheduleCategories(body.user.scheduleCategories) }));
       } catch {
         setDataMode("local");
       }
@@ -535,13 +556,36 @@ export function SemesterlyApp() {
           method: "PATCH",
           body: JSON.stringify({ scheduleCategories: customOnly(nextCategories) }),
         });
-        setStudentProfile({ name: body.user.name, school: body.user.school, year: body.user.year, major: body.user.major, scheduleCategories: parseScheduleCategories(body.user.scheduleCategories) });
+        setStudentProfile((profile) => ({ ...profile, name: body.user.name, school: body.user.school, year: body.user.year, major: body.user.major, scheduleCategories: parseScheduleCategories(body.user.scheduleCategories) }));
       } catch {
         setDataMode("local");
       }
     }
     setActionNotice("Updated schedule categories.");
   }
+
+  function updateAssignmentTrackerSettings(settings: Pick<StudentProfile, "assignmentTrackerEnabled" | "assignmentHighlightColor">) {
+    setStudentProfile((profile) => ({ ...profile, ...settings }));
+    if (!settings.assignmentTrackerEnabled && view === "assignments") setView("dashboard");
+    setActionNotice("Updated assignment tracker settings.");
+  }
+
+  async function updateCourseColor(courseId: string, color: string) {
+    const currentCourse = courses.find((course) => course.id === courseId);
+    setCourses((items) => items.map((course) => course.id === courseId ? { ...course, color } : course));
+    if (dataMode === "api") {
+      try {
+        await apiJson(`/api/courses/${courseId}`, { method: "PATCH", body: JSON.stringify({ color }) });
+      } catch {
+        if (currentCourse) setCourses((items) => items.map((course) => course.id === courseId ? currentCourse : course));
+        setDataMode("local");
+      }
+    }
+  }
+
+  useEffect(() => {
+    if (!assignmentTrackerEnabled && view === "assignments") setView("dashboard");
+  }, [assignmentTrackerEnabled, view]);
 
   async function updateTaskStatus(id: string, status: TaskStatus) {
     setTasks((items) => items.map((task) => (task.id === id ? { ...task, status } : task)));
@@ -755,17 +799,17 @@ export function SemesterlyApp() {
           <button className="brand mobile-nav-trigger" type="button" aria-label="Open module menu" aria-expanded={mobileNavOpen} onClick={() => setMobileNavOpen((open) => !open)}><span className="brand-mark">S/</span><span className="brand-name">Semesterly</span></button>
           {mobileNavOpen && <button className="mobile-nav-backdrop" type="button" aria-label="Close module menu" onClick={() => setMobileNavOpen(false)} />}
           <nav className="topnav desktop-module-nav" aria-label="Primary navigation">
-            {(["dashboard", "calendar", "courses", "profile", ...(adminUnlocked ? ["admin" as View] : [])] as View[]).map((item) => (
+            {moduleViews.map((item) => (
               <button className={view === item ? "active" : ""} key={item} onClick={() => setView(item)}>
-                {item === "dashboard" ? "Dashboard" : item === "calendar" ? "Calendar" : item === "courses" ? "Courses" : item === "admin" ? "Admin" : "Profile"}
+                {viewLabel(item)}
               </button>
             ))}
           </nav>
           <nav className="mobile-module-drawer" data-open={mobileNavOpen ? "true" : "false"} aria-label="Mobile module navigation">
             <strong>Semesterly</strong>
-            {(["dashboard", "calendar", "courses", "profile", ...(adminUnlocked ? ["admin" as View] : [])] as View[]).map((item) => (
+            {moduleViews.map((item) => (
               <button className={view === item ? "active" : ""} key={item} onClick={() => { setView(item); setMobileNavOpen(false); }}>
-                {item === "dashboard" ? "Dashboard" : item === "calendar" ? "Calendar" : item === "courses" ? "Courses" : item === "admin" ? "Admin" : "Profile"}
+                {viewLabel(item)}
               </button>
             ))}
           </nav>
@@ -777,7 +821,7 @@ export function SemesterlyApp() {
         <section className="hero-row">
           <div>
             <p className="eyebrow">{format(selectedDate, "EEEE, MMMM d")}</p>
-            <h1>{view === "dashboard" ? "Today" : view === "calendar" ? "Calendar" : view === "courses" ? "Courses" : view === "profile" ? "Profile" : "Admin"}</h1>
+            <h1>{viewLabel(view, true)}</h1>
           </div>
         </section>
 
@@ -785,7 +829,6 @@ export function SemesterlyApp() {
           <section className="dashboard-layout beginner-layout">
             <div className="left-stack main-flow">
               <PriorityCard priorities={priorities} onDone={(id) => updateTaskStatus(id, "DONE")} onStart={(id) => updateTaskStatus(id, "IN_PROGRESS")} onSnooze={snoozeTask} onDelete={deleteTask} />
-              <AssignmentTracker tasks={tasks} courses={courses} />
             </div>
 
             <div className="right-stack action-rail">
@@ -845,6 +888,16 @@ export function SemesterlyApp() {
           />
         )}
 
+        {view === "assignments" && assignmentTrackerEnabled && (
+          <AssignmentModule
+            tasks={tasks}
+            courses={courses}
+            highlightColor={assignmentHighlightColor}
+            onCourseColorChange={updateCourseColor}
+            onHighlightColorChange={(color) => updateAssignmentTrackerSettings({ assignmentTrackerEnabled: true, assignmentHighlightColor: color })}
+          />
+        )}
+
         {view === "profile" && (
           <ProfilePage
             student={studentProfile}
@@ -861,6 +914,10 @@ export function SemesterlyApp() {
             logout={logout}
             scheduleCategories={scheduleCategories}
             updateScheduleCategories={updateScheduleCategories}
+            assignmentTrackerEnabled={assignmentTrackerEnabled}
+            assignmentHighlightColor={assignmentHighlightColor}
+            updateAssignmentTrackerSettings={updateAssignmentTrackerSettings}
+            updateCourseColor={updateCourseColor}
           />
         )}
 
@@ -971,6 +1028,7 @@ function AccountGate({
 
 function ProfilePage({
   student,
+  courses,
   theme,
   setTheme,
   focusBreaksEnabled,
@@ -981,6 +1039,10 @@ function ProfilePage({
   logout,
   scheduleCategories,
   updateScheduleCategories,
+  assignmentTrackerEnabled,
+  assignmentHighlightColor,
+  updateAssignmentTrackerSettings,
+  updateCourseColor,
 }: {
   student: StudentProfile;
   courses: Course[];
@@ -996,6 +1058,10 @@ function ProfilePage({
   logout: () => void;
   scheduleCategories: ScheduleCategory[];
   updateScheduleCategories: (categories: ScheduleCategory[]) => void;
+  assignmentTrackerEnabled: boolean;
+  assignmentHighlightColor: string;
+  updateAssignmentTrackerSettings: (settings: Pick<StudentProfile, "assignmentTrackerEnabled" | "assignmentHighlightColor">) => void;
+  updateCourseColor: (courseId: string, color: string) => void;
 }) {
   return (
     <section className="profile-page">
@@ -1019,6 +1085,13 @@ function ProfilePage({
           </article>
 
           <CategoryEditor categories={scheduleCategories} onSave={updateScheduleCategories} />
+          <AssignmentModuleEditor
+            courses={courses}
+            enabled={assignmentTrackerEnabled}
+            highlightColor={assignmentHighlightColor}
+            onSettingsChange={updateAssignmentTrackerSettings}
+            onCourseColorChange={updateCourseColor}
+          />
         </div>
 
         <article className="card profile-panel">
@@ -1935,14 +2008,53 @@ function PriorityCard({ priorities, onDone, onStart, onSnooze, onDelete }: { pri
   );
 }
 
-function AssignmentTracker({ tasks, courses }: { tasks: Task[]; courses: Course[] }) {
+function AssignmentModuleEditor({ courses, enabled, highlightColor, onSettingsChange, onCourseColorChange }: { courses: Course[]; enabled: boolean; highlightColor: string; onSettingsChange: (settings: Pick<StudentProfile, "assignmentTrackerEnabled" | "assignmentHighlightColor">) => void; onCourseColorChange: (courseId: string, color: string) => void }) {
+  return (
+    <article className="card profile-panel category-editor assignment-module-editor">
+      <div className="card-title-row"><h2>Assignment tracker</h2></div>
+      <p className="muted-copy">Turn on a separate tracker module and customize course row colors.</p>
+      <label className="setting-row checkbox-row"><span>Show Assignments module</span><input checked={enabled} onChange={(event) => onSettingsChange({ assignmentTrackerEnabled: event.target.checked, assignmentHighlightColor: highlightColor })} type="checkbox" /></label>
+      <label className="setting-row"><span>Exam/project highlight</span><input type="color" value={highlightColor} onChange={(event) => onSettingsChange({ assignmentTrackerEnabled: enabled, assignmentHighlightColor: event.target.value })} /></label>
+      <div className="course-color-list">
+        {courses.map((course) => (
+          <label className="course-color-row" key={course.id}>
+            <span><i style={{ background: course.color }} />{course.code}</span>
+            <input type="color" value={course.color} onChange={(event) => onCourseColorChange(course.id, event.target.value)} aria-label={`${course.code} tracker color`} />
+          </label>
+        ))}
+      </div>
+    </article>
+  );
+}
+
+function AssignmentModule({ tasks, courses, highlightColor, onCourseColorChange, onHighlightColorChange }: { tasks: Task[]; courses: Course[]; highlightColor: string; onCourseColorChange: (courseId: string, color: string) => void; onHighlightColorChange: (color: string) => void }) {
+  return (
+    <section className="assignment-module-page">
+      <article className="card assignment-customize-card">
+        <div className="card-title-row"><h2>Customize tracker</h2></div>
+        <label className="setting-row"><span>Exam/project feature color</span><input type="color" value={highlightColor} onChange={(event) => onHighlightColorChange(event.target.value)} /></label>
+        <div className="course-color-list compact">
+          {courses.map((course) => (
+            <label className="course-color-row" key={course.id}>
+              <span><i style={{ background: course.color }} />{course.code}</span>
+              <input type="color" value={course.color} onChange={(event) => onCourseColorChange(course.id, event.target.value)} aria-label={`${course.code} row color`} />
+            </label>
+          ))}
+        </div>
+      </article>
+      <AssignmentTracker tasks={tasks} courses={courses} highlightColor={highlightColor} />
+    </section>
+  );
+}
+
+function AssignmentTracker({ tasks, courses, highlightColor }: { tasks: Task[]; courses: Course[]; highlightColor: string }) {
   const sortedTasks = [...tasks].sort((first, second) => parseISO(first.dueAt).getTime() - parseISO(second.dueAt).getTime());
   const total = sortedTasks.length;
   const completed = sortedTasks.filter((task) => task.status === "DONE").length;
   const completePercent = total ? Math.round((completed / total) * 100) : 0;
 
   return (
-    <article className="card assignment-tracker-card">
+    <article className="card assignment-tracker-card assignment-tracker-module-card">
       <div className="tracker-title-row">
         <h2>Assignment tracker sheet</h2>
       </div>
@@ -1974,8 +2086,10 @@ function AssignmentTracker({ tasks, courses }: { tasks: Task[]; courses: Course[
               const course = courses.find((item) => item.id === task.courseId);
               const dueDate = parseISO(task.dueAt);
               const daysLeft = differenceInCalendarDays(dueDate, today);
+              const featured = isFeaturedAssignment(task.title);
+              const rowColor = featured ? highlightColor : course?.color;
               return (
-                <tr className={`tracker-row status-${task.status.toLowerCase().replace("_", "-")}`} key={task.id}>
+                <tr className={`tracker-row status-${task.status.toLowerCase().replace("_", "-")}${featured ? " featured-assignment" : ""}`} key={task.id} style={rowColor ? { "--tracker-row-color": rowColor } as CSSProperties : undefined}>
                   <td>{assignmentType(task.title)}</td>
                   <td>{course?.code ?? "Personal"}</td>
                   <td>{statusLabel(task.status)}</td>
