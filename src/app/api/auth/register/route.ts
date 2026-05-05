@@ -2,12 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSessionToken, setSessionCookie } from "@/lib/auth";
 import { hashPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
+import { rateLimit } from "@/lib/rate-limit";
 
 function normalizeEmail(email?: string) {
   return email?.trim().toLowerCase() ?? "";
 }
 
 export async function POST(request: NextRequest) {
+  const limited = rateLimit(request, "auth:register", 5, 15 * 60 * 1000);
+  if (limited) return limited;
+
   const body = await request.json().catch(() => null) as { name?: string; email?: string; password?: string; school?: string; year?: string; major?: string } | null;
   const name = body?.name?.trim() ?? "";
   const email = normalizeEmail(body?.email);

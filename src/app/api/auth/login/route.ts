@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSessionToken, setSessionCookie } from "@/lib/auth";
 import { verifyPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
+  const limited = rateLimit(request, "auth:login", 10, 10 * 60 * 1000);
+  if (limited) return limited;
   const body = await request.json().catch(() => null) as { email?: string; password?: string } | null;
   const email = body?.email?.trim().toLowerCase();
   const password = body?.password ?? "";
