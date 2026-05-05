@@ -1,4 +1,5 @@
 ﻿export type TaskStatus = "NOT_STARTED" | "IN_PROGRESS" | "DONE";
+export type AssignmentType = "ASSIGNMENT" | "HOMEWORK" | "QUIZ" | "EXAM" | "PROJECT" | "ESSAY" | "READING" | "LAB" | "OTHER";
 
 export type Course = {
   id: string;
@@ -12,6 +13,8 @@ export type Course = {
 export type Task = {
   id: string;
   title: string;
+  assignmentType?: AssignmentType;
+  remarks?: string | null;
   courseId?: string;
   dueAt: string;
   estimatedMinutes: number;

@@ -91,6 +91,8 @@ model Task {
   userId           String
   courseId         String?
   title            String
+  assignmentType   String     @default("ASSIGNMENT")
+  remarks          String?
   notes            String?
   dueAt            DateTime
   estimatedMinutes Int        @default(60)

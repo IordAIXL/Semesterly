@@ -18,6 +18,7 @@ const workspaceSelect = {
 
 let scheduleCategoriesColumnReady = false;
 let preferencesColumnReady = false;
+let taskMetadataColumnsReady = false;
 
 async function ensureScheduleCategoriesColumn() {
   if (scheduleCategoriesColumnReady) return;
@@ -29,6 +30,13 @@ async function ensurePreferencesColumn() {
   if (preferencesColumnReady) return;
   await prisma.$executeRawUnsafe('ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "preferences" TEXT');
   preferencesColumnReady = true;
+}
+
+async function ensureTaskMetadataColumns() {
+  if (taskMetadataColumnsReady) return;
+  await prisma.$executeRawUnsafe('ALTER TABLE "Task" ADD COLUMN IF NOT EXISTS "assignmentType" TEXT NOT NULL DEFAULT \'ASSIGNMENT\'');
+  await prisma.$executeRawUnsafe('ALTER TABLE "Task" ADD COLUMN IF NOT EXISTS "remarks" TEXT');
+  taskMetadataColumnsReady = true;
 }
 
 async function getScheduleCategories(userId: string) {
@@ -67,6 +75,7 @@ async function getEvents(userId: string) {
 }
 
 async function getWorkspaceUser(userId: string) {
+  await ensureTaskMetadataColumns();
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: workspaceSelect,

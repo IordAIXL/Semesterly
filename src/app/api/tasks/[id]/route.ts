@@ -4,13 +4,24 @@ import { requireUser, isAuthResponse } from "@/lib/auth";
 
 type Params = { params: Promise<{ id: string }> };
 
+const assignmentTypes = new Set(["ASSIGNMENT", "HOMEWORK", "QUIZ", "EXAM", "PROJECT", "ESSAY", "READING", "LAB", "OTHER"]);
+let taskMetadataColumnsReady = false;
+
+async function ensureTaskMetadataColumns() {
+  if (taskMetadataColumnsReady) return;
+  await prisma.$executeRawUnsafe('ALTER TABLE "Task" ADD COLUMN IF NOT EXISTS "assignmentType" TEXT NOT NULL DEFAULT \'ASSIGNMENT\'');
+  await prisma.$executeRawUnsafe('ALTER TABLE "Task" ADD COLUMN IF NOT EXISTS "remarks" TEXT');
+  taskMetadataColumnsReady = true;
+}
+
 export async function PATCH(request: NextRequest, context: Params) {
   const auth = requireUser(request);
   if (isAuthResponse(auth)) return auth;
   const { userId } = auth;
+  await ensureTaskMetadataColumns();
 
   const { id } = await context.params;
-  const body = await request.json().catch(() => null) as { title?: string; courseId?: string | null; dueAt?: string; estimatedMinutes?: number; importance?: number; status?: "NOT_STARTED" | "IN_PROGRESS" | "DONE" } | null;
+  const body = await request.json().catch(() => null) as { title?: string; assignmentType?: string; remarks?: string | null; courseId?: string | null; dueAt?: string; estimatedMinutes?: number; importance?: number; status?: "NOT_STARTED" | "IN_PROGRESS" | "DONE" } | null;
   const existing = await prisma.task.findFirst({ where: { id, userId } });
   if (!existing) return NextResponse.json({ error: "Task not found" }, { status: 404 });
   if (body?.courseId) {
@@ -24,6 +35,8 @@ export async function PATCH(request: NextRequest, context: Params) {
     where: { id },
     data: {
       title: body?.title,
+      assignmentType: body?.assignmentType && assignmentTypes.has(body.assignmentType) ? body.assignmentType : undefined,
+      remarks: body?.remarks === null ? null : typeof body?.remarks === "string" ? body.remarks.trim().slice(0, 500) || null : undefined,
       courseId: body?.courseId,
       dueAt,
       estimatedMinutes: body?.estimatedMinutes,
@@ -39,6 +52,7 @@ export async function DELETE(request: NextRequest, context: Params) {
   const auth = requireUser(request);
   if (isAuthResponse(auth)) return auth;
   const { userId } = auth;
+  await ensureTaskMetadataColumns();
 
   const { id } = await context.params;
   const existing = await prisma.task.findFirst({ where: { id, userId } });

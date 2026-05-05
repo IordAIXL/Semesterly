@@ -7,13 +7,15 @@ import { allSampleStudents, defaultStudent } from "@/lib/sample-users";
 import { parseTaskInput } from "@/lib/natural-language";
 import { prioritizeTasks } from "@/lib/priority";
 import { buildRecommendations } from "@/lib/recommendations";
-import type { Course, ScheduleEvent, Task, TaskStatus } from "@/lib/types";
+import type { AssignmentType, Course, ScheduleEvent, Task, TaskStatus } from "@/lib/types";
 
 type View = "dashboard" | "calendar" | "courses" | "assignments" | "profile" | "admin";
 type CalendarMode = "day" | "week" | "month" | "semester";
 
 type DraftTask = {
   title: string;
+  assignmentType: AssignmentType;
+  remarks: string;
   courseId: string;
   dueDate: string;
   dueTime: string;
@@ -77,6 +79,8 @@ const isoDate = format(today, "yyyy-MM-dd");
 
 const defaultTask: DraftTask = {
   title: "",
+  assignmentType: "ASSIGNMENT",
+  remarks: "",
   courseId: "",
   dueDate: isoDate,
   dueTime: "23:59",
@@ -136,20 +140,39 @@ function priorityLabel(importance: number) {
   return "Medium";
 }
 
-function assignmentType(title: string) {
+const assignmentTypes: AssignmentType[] = ["ASSIGNMENT", "HOMEWORK", "QUIZ", "EXAM", "PROJECT", "ESSAY", "READING", "LAB", "OTHER"];
+
+function inferAssignmentType(title: string): AssignmentType {
   const normalized = title.toLowerCase();
-  if (normalized.includes("exam") || normalized.includes("test") || normalized.includes("midterm") || normalized.includes("final")) return "Exam";
-  if (normalized.includes("essay") || normalized.includes("paper")) return "Essay";
-  if (normalized.includes("project")) return "Project";
-  if (normalized.includes("presentation")) return "Presentation";
-  if (normalized.includes("quiz")) return "Quiz";
-  if (normalized.includes("read")) return "Reading";
-  return "Assignment";
+  if (normalized.includes("exam") || normalized.includes("test") || normalized.includes("midterm") || normalized.includes("final")) return "EXAM";
+  if (normalized.includes("project") || normalized.includes("presentation")) return "PROJECT";
+  if (normalized.includes("quiz")) return "QUIZ";
+  if (normalized.includes("essay") || normalized.includes("paper") || normalized.includes("report")) return "ESSAY";
+  if (normalized.includes("read")) return "READING";
+  if (normalized.includes("lab")) return "LAB";
+  if (normalized.includes("homework") || normalized.includes("problem set") || normalized.includes("pset")) return "HOMEWORK";
+  return "ASSIGNMENT";
 }
 
-function isFeaturedAssignment(title: string) {
-  const type = assignmentType(title);
-  return type === "Exam" || type === "Project";
+function assignmentTypeLabel(type?: AssignmentType, title = "") {
+  const normalized = type && type !== "ASSIGNMENT" ? type : inferAssignmentType(title);
+  const labels: Record<AssignmentType, string> = {
+    ASSIGNMENT: "Assignment",
+    HOMEWORK: "Homework",
+    QUIZ: "Quiz",
+    EXAM: "Exam",
+    PROJECT: "Project",
+    ESSAY: "Essay",
+    READING: "Reading",
+    LAB: "Lab",
+    OTHER: "Other",
+  };
+  return labels[normalized];
+}
+
+function isFeaturedAssignment(task: Pick<Task, "title" | "assignmentType">) {
+  const type = task.assignmentType && task.assignmentType !== "ASSIGNMENT" ? task.assignmentType : inferAssignmentType(task.title);
+  return type === "EXAM" || type === "PROJECT";
 }
 
 const defaultScheduleCategories: ScheduleCategory[] = [
@@ -209,6 +232,8 @@ function mapTask(task: ApiStudent["tasks"][number]): Task {
   return {
     id: task.id,
     title: task.title,
+    assignmentType: task.assignmentType ?? inferAssignmentType(task.title),
+    remarks: task.remarks ?? null,
     courseId: task.courseId,
     dueAt: new Date(task.dueAt).toISOString(),
     estimatedMinutes: task.estimatedMinutes,
@@ -454,6 +479,8 @@ export function SemesterlyApp() {
     const task: Task = {
       id: `task-${Date.now()}`,
       title: taskDraft.title.trim(),
+      assignmentType: taskDraft.assignmentType,
+      remarks: taskDraft.remarks.trim() || undefined,
       courseId: taskDraft.courseId || undefined,
       dueAt: makeDateTime(taskDraft.dueDate, taskDraft.dueTime),
       estimatedMinutes: Number(taskDraft.estimatedMinutes),
@@ -464,7 +491,7 @@ export function SemesterlyApp() {
       try {
         const body = await apiJson<{ task: ApiStudent["tasks"][number] }>("/api/tasks", {
           method: "POST",
-          body: JSON.stringify({ title: task.title, courseId: task.courseId, dueAt: task.dueAt, estimatedMinutes: task.estimatedMinutes, importance: task.importance }),
+          body: JSON.stringify({ title: task.title, assignmentType: task.assignmentType, remarks: task.remarks, courseId: task.courseId, dueAt: task.dueAt, estimatedMinutes: task.estimatedMinutes, importance: task.importance }),
         });
         setTasks((items) => [mapTask(body.task), ...items]);
       } catch {
@@ -2113,17 +2140,17 @@ function AssignmentTracker({ tasks, courses, highlightColor }: { tasks: Task[]; 
               const course = courses.find((item) => item.id === task.courseId);
               const dueDate = parseISO(task.dueAt);
               const daysLeft = differenceInCalendarDays(dueDate, today);
-              const featured = isFeaturedAssignment(task.title);
+              const featured = isFeaturedAssignment(task);
               const rowColor = featured ? highlightColor : course?.color;
               return (
                 <tr className={`tracker-row status-${task.status.toLowerCase().replace("_", "-")}${featured ? " featured-assignment" : ""}`} key={task.id} style={rowColor ? { "--tracker-row-color": rowColor } as CSSProperties : undefined}>
-                  <td>{assignmentType(task.title)}</td>
+                  <td>{assignmentTypeLabel(task.assignmentType, task.title)}</td>
                   <td>{course?.code ?? "Personal"}</td>
                   <td>{statusLabel(task.status)}</td>
                   <td>{format(dueDate, "d-MMM-yy")}</td>
                   <td>{priorityLabel(task.importance)}</td>
                   <td>{daysLeft < 0 ? "Overdue" : daysLeft}</td>
-                  <td>{task.title}</td>
+                  <td>{task.remarks || task.title}</td>
                 </tr>
               );
             })}
@@ -2211,11 +2238,13 @@ function TaskFields({ taskDraft, setTaskDraft, courses, compact = false }: { tas
   return (
     <div className={compact ? "form-grid compact" : "form-grid"}>
       <label className="wide">Title<input value={taskDraft.title} onChange={(event) => setTaskDraft({ ...taskDraft, title: event.target.value })} placeholder="Exam review, problem set..." /></label>
+      <label>Type<select value={taskDraft.assignmentType} onChange={(event) => setTaskDraft({ ...taskDraft, assignmentType: event.target.value as AssignmentType })}>{assignmentTypes.map((type) => <option key={type} value={type}>{assignmentTypeLabel(type)}</option>)}</select></label>
       <label>Course<select value={taskDraft.courseId} onChange={(event) => setTaskDraft({ ...taskDraft, courseId: event.target.value })}><option value="">Personal / none</option>{courses.map((course) => <option key={course.id} value={course.id}>{course.code}</option>)}</select></label>
       <label>Due date<input type="date" value={taskDraft.dueDate} onChange={(event) => setTaskDraft({ ...taskDraft, dueDate: event.target.value })} /></label>
       <label>Due time<input type="time" value={taskDraft.dueTime} onChange={(event) => setTaskDraft({ ...taskDraft, dueTime: event.target.value })} /></label>
       <label>Effort<input type="number" min="5" step="5" value={taskDraft.estimatedMinutes} onChange={(event) => setTaskDraft({ ...taskDraft, estimatedMinutes: Number(event.target.value) })} /></label>
       <label>Importance<select value={taskDraft.importance} onChange={(event) => setTaskDraft({ ...taskDraft, importance: Number(event.target.value) })}>{[1,2,3,4,5].map((n) => <option key={n} value={n}>{n}/5</option>)}</select></label>
+      <label className="wide">Remarks<input value={taskDraft.remarks} onChange={(event) => setTaskDraft({ ...taskDraft, remarks: event.target.value })} placeholder="Optional: rubric, chapter, submission link..." /></label>
     </div>
   );
 }
