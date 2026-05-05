@@ -1109,6 +1109,7 @@ function AccountGate({
           <label className="setting-row"><span>Password</span><input autoComplete={isSignin ? "current-password" : "new-password"} name={isSignin ? "current-password" : "new-password"} value={loginPassword} onChange={(event) => setLoginPassword(event.target.value)} placeholder={isSignin ? "Password" : "At least 8 characters"} type="password" /></label>
           <button className="primary-button" type="submit">{isSignin ? "Sign in" : "Create private account"}</button>
           <button className="ghost-button full-width auth-switch-button" type="button" onClick={() => setAuthMode(isSignin ? "create" : "signin")}>{isSignin ? "Need an account? Create one" : "Already have an account? Sign in"}</button>
+          <p className="fine-print auth-legal-copy">By continuing, you agree to Semesterly's <a href="/terms">Terms</a> and <a href="/privacy">Privacy Policy</a>. Need help? <a href="/support">Support</a>.</p>
           {authNotice && <p className="fine-print">{authNotice}</p>}
         </form>
       </main>

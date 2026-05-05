@@ -669,6 +669,8 @@ button.danger-link:hover, .assignment-actions .danger-link:hover { color: #fff; 
 .account-brand { color: var(--ink); margin-bottom: 24px; }
 .account-card { display: grid; gap: 14px; padding: 24px; }
 .account-card .primary-button, .account-card .ghost-button { width: 100%; justify-content: center; }
+.auth-legal-copy a { color: var(--blue); font-weight: 800; text-decoration: none; }
+.auth-legal-copy a:hover { text-decoration: underline; }
 .onboarding-steps { display: grid; gap: 10px; margin-top: 10px; }
 .onboarding-steps div { display: flex; align-items: center; gap: 10px; color: var(--muted); font-weight: 700; }
 .onboarding-steps strong { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; background: var(--blue-soft); color: var(--blue); }
