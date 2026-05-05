@@ -36,3 +36,12 @@ jobs:
         env:
           DATABASE_URL: file:./dev.db
           DIRECT_URL: file:./dev.db
+
+      - name: Deploy readiness check
+        run: npm run deploy:check
+        env:
+          DATABASE_URL: file:./dev.db
+          DIRECT_URL: file:./dev.db
+          ADMIN_TOKEN: ci-only-token
+          SESSION_SECRET: ci-only-session-secret-with-32-chars
+          DEMO_AUTH_ENABLED: "false"
