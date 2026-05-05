@@ -116,6 +116,23 @@ function statusLabel(status: TaskStatus) {
   return "Done";
 }
 
+function priorityLabel(importance: number) {
+  if (importance >= 5) return "High";
+  if (importance <= 2) return "Low";
+  return "Medium";
+}
+
+function assignmentType(title: string) {
+  const normalized = title.toLowerCase();
+  if (normalized.includes("exam") || normalized.includes("test") || normalized.includes("midterm") || normalized.includes("final")) return "Exam";
+  if (normalized.includes("essay") || normalized.includes("paper")) return "Essay";
+  if (normalized.includes("project")) return "Project";
+  if (normalized.includes("presentation")) return "Presentation";
+  if (normalized.includes("quiz")) return "Quiz";
+  if (normalized.includes("read")) return "Reading";
+  return "Assignment";
+}
+
 const defaultScheduleCategories: ScheduleCategory[] = [
   { id: "CLASS", label: "Class", color: "#1a73e8" },
   { id: "STUDY", label: "Study", color: "#34a853" },
@@ -768,6 +785,7 @@ export function SemesterlyApp() {
           <section className="dashboard-layout beginner-layout">
             <div className="left-stack main-flow">
               <PriorityCard priorities={priorities} onDone={(id) => updateTaskStatus(id, "DONE")} onStart={(id) => updateTaskStatus(id, "IN_PROGRESS")} onSnooze={snoozeTask} onDelete={deleteTask} />
+              <AssignmentTracker tasks={tasks} courses={courses} />
             </div>
 
             <div className="right-stack action-rail">
@@ -1912,6 +1930,64 @@ function PriorityCard({ priorities, onDone, onStart, onSnooze, onDelete }: { pri
             </div>
           </div>
         ))}
+      </div>
+    </article>
+  );
+}
+
+function AssignmentTracker({ tasks, courses }: { tasks: Task[]; courses: Course[] }) {
+  const sortedTasks = [...tasks].sort((first, second) => parseISO(first.dueAt).getTime() - parseISO(second.dueAt).getTime());
+  const total = sortedTasks.length;
+  const completed = sortedTasks.filter((task) => task.status === "DONE").length;
+  const completePercent = total ? Math.round((completed / total) * 100) : 0;
+
+  return (
+    <article className="card assignment-tracker-card">
+      <div className="tracker-title-row">
+        <h2>Assignment tracker sheet</h2>
+      </div>
+      <div className="tracker-summary-grid" aria-label="Assignment tracker summary">
+        <span>Total assmt.</span><strong>{total}</strong>
+        <span>Completed</span><strong>{completed}</strong>
+        <span>% Complete</span><strong>{completePercent}%</strong>
+      </div>
+      <div className="assignment-sheet-wrap">
+        <table className="assignment-sheet">
+          <thead>
+            <tr>
+              <th>Assignment Type</th>
+              <th>Subject/Course</th>
+              <th>Status</th>
+              <th>Due Date</th>
+              <th>Priority Level</th>
+              <th>Days Left</th>
+              <th>Remarks</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sortedTasks.length === 0 && (
+              <tr>
+                <td colSpan={7} className="empty-sheet-cell">No assignments yet. Use Add to start your semester list.</td>
+              </tr>
+            )}
+            {sortedTasks.map((task) => {
+              const course = courses.find((item) => item.id === task.courseId);
+              const dueDate = parseISO(task.dueAt);
+              const daysLeft = differenceInCalendarDays(dueDate, today);
+              return (
+                <tr className={`tracker-row status-${task.status.toLowerCase().replace("_", "-")}`} key={task.id}>
+                  <td>{assignmentType(task.title)}</td>
+                  <td>{course?.code ?? "Personal"}</td>
+                  <td>{statusLabel(task.status)}</td>
+                  <td>{format(dueDate, "d-MMM-yy")}</td>
+                  <td>{priorityLabel(task.importance)}</td>
+                  <td>{daysLeft < 0 ? "Overdue" : daysLeft}</td>
+                  <td>{task.title}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </article>
   );
