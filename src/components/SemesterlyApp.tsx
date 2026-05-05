@@ -882,6 +882,7 @@ export function SemesterlyApp() {
         {view === "dashboard" && (
           <section className="dashboard-layout beginner-layout">
             <div className="left-stack main-flow">
+              <OnboardingCard courses={courses} tasks={tasks} schedule={schedule} assignmentTrackerEnabled={assignmentTrackerEnabled} onNavigate={setView} />
               <PriorityCard priorities={priorities} onDone={(id) => updateTaskStatus(id, "DONE")} onStart={(id) => updateTaskStatus(id, "IN_PROGRESS")} onSnooze={snoozeTask} onDelete={deleteTask} />
             </div>
 
@@ -1077,6 +1078,39 @@ function AccountGate({
         </form>
       </main>
     </div>
+  );
+}
+
+function OnboardingCard({ courses, tasks, schedule, assignmentTrackerEnabled, onNavigate }: { courses: Course[]; tasks: Task[]; schedule: ScheduleEvent[]; assignmentTrackerEnabled: boolean; onNavigate: (view: View) => void }) {
+  const steps = [
+    { label: "Add your first course", done: courses.length > 0, action: "Courses", view: "courses" as View },
+    { label: "Add assignments with type + due date", done: tasks.length > 0, action: "Assignments", view: assignmentTrackerEnabled ? "assignments" as View : "courses" as View },
+    { label: "Put classes or study blocks on the calendar", done: schedule.length > 0, action: "Calendar", view: "calendar" as View },
+    { label: "Turn on preferred modules", done: assignmentTrackerEnabled, action: "Profile", view: "profile" as View },
+  ];
+  const completed = steps.filter((step) => step.done).length;
+  if (completed === steps.length) return null;
+
+  return (
+    <article className="card onboarding-card">
+      <div className="card-title-row">
+        <div>
+          <p className="eyebrow">First five minutes</p>
+          <h2>Set up your semester</h2>
+        </div>
+        <span className="setup-pill">{completed}/{steps.length} done</span>
+      </div>
+      <p className="onboarding-copy">Start here so Semesterly can build a useful daily plan instead of an empty dashboard.</p>
+      <div className="onboarding-steps">
+        {steps.map((step) => (
+          <button className={`onboarding-step${step.done ? " done" : ""}`} key={step.label} onClick={() => onNavigate(step.view)}>
+            <span>{step.done ? "✓" : "○"}</span>
+            <strong>{step.label}</strong>
+            <em>{step.action}</em>
+          </button>
+        ))}
+      </div>
+    </article>
   );
 }
 

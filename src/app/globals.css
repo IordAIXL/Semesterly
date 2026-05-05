@@ -3305,6 +3305,58 @@ button,
   color: var(--muted);
   background: var(--surface-soft);
 }
+.onboarding-card {
+  border-color: rgba(26, 115, 232, .24);
+  background: linear-gradient(135deg, rgba(26, 115, 232, .08), rgba(255, 255, 255, .92));
+}
+.setup-pill {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--surface);
+  font-weight: 900;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.onboarding-copy {
+  margin: 4px 0 18px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.onboarding-steps {
+  display: grid;
+  gap: 10px;
+}
+.onboarding-step {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 13px 14px;
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.onboarding-step strong {
+  font-size: 14px;
+}
+.onboarding-step em {
+  color: var(--muted);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 800;
+}
+.onboarding-step.done {
+  opacity: .72;
+}
+.onboarding-step.done span {
+  color: var(--green);
+  font-weight: 900;
+}
 .legal-page {
   min-height: 100vh;
   padding: max(28px, env(safe-area-inset-top)) 18px max(28px, env(safe-area-inset-bottom));
