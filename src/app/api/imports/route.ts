@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser, isAuthResponse } from "@/lib/auth";
+import { jsonNoStore } from "@/lib/api-response";
 import { isImportKind, normalizeImportItems, type DraftImportBody } from "@/lib/imports";
 
 async function readImportBody(request: NextRequest): Promise<DraftImportBody | null> {
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
     orderBy: { createdAt: "desc" },
     include: { items: true },
   });
-  return NextResponse.json({ batches });
+  return jsonNoStore({ batches });
 }
 
 export async function POST(request: NextRequest) {
@@ -58,7 +59,7 @@ export async function POST(request: NextRequest) {
       },
       include: { items: true },
     });
-    return NextResponse.json({ batch, nextStep: "Review imported data before saving anything to Semesterly." }, { status: 201 });
+    return jsonNoStore({ batch, nextStep: "Review imported data before saving anything to Semesterly." }, { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Could not create import" }, { status: 400 });
   }

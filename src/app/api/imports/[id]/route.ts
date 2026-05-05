@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser, isAuthResponse } from "@/lib/auth";
+import { jsonNoStore } from "@/lib/api-response";
 import { normalizeImportItem } from "@/lib/imports";
 
 export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
@@ -10,7 +11,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
   const { id } = await context.params;
   const batch = await prisma.importBatch.findFirst({ where: { id, userId }, include: { items: true } });
   if (!batch) return NextResponse.json({ error: "Import batch not found" }, { status: 404 });
-  return NextResponse.json({ batch });
+  return jsonNoStore({ batch });
 }
 
 export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
@@ -54,7 +55,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       }
     });
     const updated = await prisma.importBatch.findFirst({ where: { id, userId }, include: { items: true } });
-    return NextResponse.json({ batch: updated });
+    return jsonNoStore({ batch: updated });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Could not update import" }, { status: 400 });
   }
@@ -68,5 +69,5 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
   const batch = await prisma.importBatch.findFirst({ where: { id, userId } });
   if (!batch) return NextResponse.json({ error: "Import batch not found" }, { status: 404 });
   await prisma.importBatch.update({ where: { id }, data: { status: "DISCARDED" } });
-  return NextResponse.json({ ok: true });
+  return jsonNoStore({ ok: true });
 }
