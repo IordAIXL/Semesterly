@@ -35,5 +35,5 @@ export async function GET(request: NextRequest) {
     exportedAt: new Date().toISOString(),
     note: "Password hashes and session secrets are intentionally excluded.",
     user,
-  });
+  }, { headers: { "Cache-Control": "no-store" } });
 }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireUser, isAuthResponse } from "@/lib/auth";
+import { clearSessionCookie, requireUser, isAuthResponse } from "@/lib/auth";
 
 export async function DELETE(request: NextRequest) {
   const auth = requireUser(request);
@@ -15,5 +15,7 @@ export async function DELETE(request: NextRequest) {
   if (existing.role === "ADMIN") return NextResponse.json({ error: "Admin account cannot be deleted here" }, { status: 403 });
 
   await prisma.user.delete({ where: { id: userId } });
-  return NextResponse.json({ ok: true });
+  const response = NextResponse.json({ ok: true });
+  clearSessionCookie(response);
+  return response;
 }
