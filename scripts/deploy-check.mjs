@@ -55,6 +55,9 @@ for (const route of [
   "src/app/api/privacy/export/route.ts",
   "src/app/api/privacy/delete/route.ts",
   "src/app/api/admin/users/route.ts",
+  "src/app/privacy/page.tsx",
+  "src/app/terms/page.tsx",
+  "src/app/support/page.tsx",
 ]) {
   if (!exists(route)) fail(`route:${route}`, "Critical deploy/API route is missing.");
 }
@@ -73,6 +76,14 @@ if (!prismaSchema.includes('provider  = "postgresql"')) fail("prisma:provider", 
 if (!prismaSchema.includes("directUrl = env(\"DIRECT_URL\")")) fail("prisma:directUrl", "Postgres schema must define DIRECT_URL for migrations.");
 if (!exists("prisma/schema.sqlite.prisma")) fail("prisma:sqlite", "Local SQLite schema must stay available for offline demo validation.");
 if (!exists("prisma/migrations/0001_init_postgres/migration.sql")) fail("prisma:migration", "Initial Postgres migration is missing.");
+for (const migration of ["0004_user_preferences", "0005_assignment_metadata"]) {
+  if (!exists(`prisma/migrations/${migration}/migration.sql`)) fail(`prisma:migration:${migration}`, "Recent production-readiness migration is missing.");
+}
+
+const nextConfig = fs.readFileSync(path.join(root, "next.config.mjs"), "utf8");
+for (const header of ["X-Content-Type-Options", "X-Frame-Options", "Referrer-Policy", "Permissions-Policy"]) {
+  if (!nextConfig.includes(header)) fail(`security-header:${header}`, "Baseline security header missing from next.config.mjs.");
+}
 
 if (process.env.SESSION_SECRET && process.env.SESSION_SECRET.length < 32) {
   fail("SESSION_SECRET", "SESSION_SECRET must be at least 32 characters when set.");
