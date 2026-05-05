@@ -2221,7 +2221,7 @@ function AssignmentTracker({ tasks, courses, highlightColor }: { tasks: Task[]; 
           <tbody>
             {sortedTasks.length === 0 && (
               <tr>
-                <td colSpan={7} className="empty-sheet-cell">No assignments yet. Use Add to start your semester list.</td>
+                <td colSpan={8} className="empty-sheet-cell">No assignments yet. Use Add to start your semester list.</td>
               </tr>
             )}
             {sortedTasks.map((task) => {
