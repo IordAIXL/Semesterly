@@ -73,6 +73,11 @@ button { color: inherit; }
   color: var(--muted);
 }
 .ghost-button:hover { color: var(--ink); box-shadow: var(--shadow); }
+.ghost-button.danger { color: var(--red); border-color: #f4c7c3; }
+.ghost-button.danger:hover { color: #fff; background: var(--red); border-color: var(--red); }
+.data-controls-card p { margin: 0 0 14px; color: var(--muted); line-height: 1.5; }
+.data-control-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.inline-legal-links { margin-top: 14px; justify-content: flex-start; }
 
 .main { max-width: 1380px; margin: 0 auto; padding: 28px; }
 .offline-page { min-height: 100vh; display: grid; place-items: center; padding: 24px; background: var(--bg); }

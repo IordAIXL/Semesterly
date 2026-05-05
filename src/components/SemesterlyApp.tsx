@@ -801,6 +801,39 @@ export function SemesterlyApp() {
     }
   }
 
+  async function exportMyData() {
+    try {
+      const response = await fetch("/api/privacy/export");
+      if (!response.ok) throw new Error("Export failed");
+      const data = await response.json();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `semesterly-export-${format(new Date(), "yyyy-MM-dd")}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      setActionNotice("Downloaded your Semesterly data export.");
+    } catch {
+      setActionNotice("Data export failed. Try again from a signed-in account.");
+    }
+  }
+
+  async function deleteMyData() {
+    const confirmed = window.confirm("Delete this Semesterly account and all courses, assignments, and events? This cannot be undone.");
+    if (!confirmed) return;
+    try {
+      const response = await fetch("/api/privacy/delete", { method: "DELETE", headers: { "x-confirm-delete": "DELETE-MY-DATA" } });
+      if (!response.ok) throw new Error("Delete failed");
+      setActionNotice("Account data deleted.");
+      await logout();
+    } catch {
+      setActionNotice("Account deletion failed. Admin/demo accounts may be protected.");
+    }
+  }
+
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" }).catch(() => undefined);
     setUseCookieSession(false);
@@ -967,6 +1000,8 @@ export function SemesterlyApp() {
             setFocusBreakMinutes={setFocusBreakMinutes}
             updateProfileName={updateProfileName}
             logout={logout}
+            exportMyData={exportMyData}
+            deleteMyData={deleteMyData}
             scheduleCategories={scheduleCategories}
             updateScheduleCategories={updateScheduleCategories}
             assignmentTrackerEnabled={assignmentTrackerEnabled}
@@ -1125,6 +1160,8 @@ function ProfilePage({
   setFocusBreakMinutes,
   updateProfileName,
   logout,
+  exportMyData,
+  deleteMyData,
   scheduleCategories,
   updateScheduleCategories,
   assignmentTrackerEnabled,
@@ -1144,6 +1181,8 @@ function ProfilePage({
   setFocusBreakMinutes: (minutes: number) => void;
   updateProfileName: (name: string) => void;
   logout: () => void;
+  exportMyData: () => void;
+  deleteMyData: () => void;
   scheduleCategories: ScheduleCategory[];
   updateScheduleCategories: (categories: ScheduleCategory[]) => void;
   assignmentTrackerEnabled: boolean;
@@ -1170,6 +1209,20 @@ function ProfilePage({
           <article className="card profile-panel">
             <div className="card-title-row"><h2>Account</h2></div>
             <button className="ghost-button full-width" onClick={logout}>Sign out</button>
+          </article>
+
+          <article className="card profile-panel data-controls-card">
+            <div className="card-title-row"><h2>Data & privacy</h2></div>
+            <p>Export your Semesterly data or delete this account. Legal pages are public for App Store review.</p>
+            <div className="data-control-actions">
+              <button className="ghost-button" onClick={exportMyData}>Export data</button>
+              <button className="ghost-button danger" onClick={deleteMyData}>Delete account</button>
+            </div>
+            <div className="legal-actions inline-legal-links">
+              <a className="legal-link" href="/privacy">Privacy</a>
+              <a className="legal-link" href="/terms">Terms</a>
+              <a className="legal-link" href="/support">Support</a>
+            </div>
           </article>
 
           <CategoryEditor categories={scheduleCategories} onSave={updateScheduleCategories} />
