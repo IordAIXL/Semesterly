@@ -9,10 +9,23 @@ export async function GET(request: NextRequest) {
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    include: {
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      timezone: true,
+      school: true,
+      year: true,
+      major: true,
+      scheduleCategories: true,
+      preferences: true,
+      createdAt: true,
+      terms: true,
       courses: { include: { meetings: true } },
       tasks: { orderBy: { dueAt: "asc" } },
       events: { orderBy: { startsAt: "asc" } },
+      importBatches: { include: { items: true }, orderBy: { createdAt: "desc" } },
     },
   });
 
@@ -20,6 +33,7 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     exportedAt: new Date().toISOString(),
+    note: "Password hashes and session secrets are intentionally excluded.",
     user,
   });
 }
