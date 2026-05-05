@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser, isAuthResponse } from "@/lib/auth";
+import { jsonNoStore } from "@/lib/api-response";
 
 export async function GET(request: NextRequest) {
   const auth = requireUser(request);
   if (isAuthResponse(auth)) return auth;
   const { userId } = auth;
   const courses = await prisma.course.findMany({ where: { userId }, orderBy: { code: "asc" }, include: { meetings: true } });
-  return NextResponse.json({ courses });
+  return jsonNoStore({ courses });
 }
 
 export async function POST(request: NextRequest) {
@@ -26,5 +27,5 @@ export async function POST(request: NextRequest) {
       location: body.location,
     },
   });
-  return NextResponse.json({ course }, { status: 201 });
+  return jsonNoStore({ course }, { status: 201 });
 }

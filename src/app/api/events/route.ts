@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser, isAuthResponse } from "@/lib/auth";
+import { jsonNoStore } from "@/lib/api-response";
 
 const legacyCategories = new Set(["CLASS", "STUDY", "PERSONAL", "WORK", "CLUB", "OTHER"]);
 
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
   if (isAuthResponse(auth)) return auth;
   const { userId } = auth;
   const events = await listEvents(userId);
-  return NextResponse.json({ events });
+  return jsonNoStore({ events });
 }
 
 export async function POST(request: NextRequest) {
@@ -54,11 +55,11 @@ export async function POST(request: NextRequest) {
 
   try {
     const event = await prisma.event.create({ include: { course: true }, data });
-    return NextResponse.json({ event }, { status: 201 });
+    return jsonNoStore({ event }, { status: 201 });
   } catch (error) {
     // Production may lag the custom-category migration. Keep event creation working on the legacy enum DB.
     if (legacyCategories.has(requestedCategory)) throw error;
     const event = await prisma.event.create({ include: { course: true }, data: { ...data, category: "OTHER" } });
-    return NextResponse.json({ event: { ...event, category: "OTHER" } }, { status: 201 });
+    return jsonNoStore({ event: { ...event, category: "OTHER" } }, { status: 201 });
   }
 }

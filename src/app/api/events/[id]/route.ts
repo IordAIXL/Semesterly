@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser, isAuthResponse } from "@/lib/auth";
+import { jsonNoStore } from "@/lib/api-response";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -51,7 +52,7 @@ export async function PATCH(request: NextRequest, context: Params) {
     },
   });
 
-  return NextResponse.json({ event });
+  return jsonNoStore({ event });
 }
 
 export async function DELETE(request: NextRequest, context: Params) {
@@ -64,5 +65,5 @@ export async function DELETE(request: NextRequest, context: Params) {
   if (!existing) return NextResponse.json({ error: "Event not found" }, { status: 404 });
 
   await prisma.event.delete({ where: { id } });
-  return NextResponse.json({ ok: true });
+  return jsonNoStore({ ok: true });
 }

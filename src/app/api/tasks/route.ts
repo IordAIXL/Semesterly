@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser, isAuthResponse } from "@/lib/auth";
+import { jsonNoStore } from "@/lib/api-response";
 
 const assignmentTypes = new Set(["ASSIGNMENT", "HOMEWORK", "QUIZ", "EXAM", "PROJECT", "ESSAY", "READING", "LAB", "OTHER"]);
 let taskMetadataColumnsReady = false;
@@ -18,7 +19,7 @@ export async function GET(request: NextRequest) {
   const { userId } = auth;
   await ensureTaskMetadataColumns();
   const tasks = await prisma.task.findMany({ where: { userId }, orderBy: { dueAt: "asc" }, include: { course: true } });
-  return NextResponse.json({ tasks });
+  return jsonNoStore({ tasks });
 }
 
 export async function POST(request: NextRequest) {
@@ -46,5 +47,5 @@ export async function POST(request: NextRequest) {
       importance: body.importance ?? 3,
     },
   });
-  return NextResponse.json({ task }, { status: 201 });
+  return jsonNoStore({ task }, { status: 201 });
 }
