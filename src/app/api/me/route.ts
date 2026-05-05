@@ -17,11 +17,18 @@ const workspaceSelect = {
 } as const;
 
 let scheduleCategoriesColumnReady = false;
+let preferencesColumnReady = false;
 
 async function ensureScheduleCategoriesColumn() {
   if (scheduleCategoriesColumnReady) return;
   await prisma.$executeRawUnsafe('ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "scheduleCategories" TEXT');
   scheduleCategoriesColumnReady = true;
+}
+
+async function ensurePreferencesColumn() {
+  if (preferencesColumnReady) return;
+  await prisma.$executeRawUnsafe('ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "preferences" TEXT');
+  preferencesColumnReady = true;
 }
 
 async function getScheduleCategories(userId: string) {
@@ -31,6 +38,16 @@ async function getScheduleCategories(userId: string) {
     return rows[0]?.scheduleCategories ?? null;
   } catch {
     // Sign-in should still work even if the DB temporarily blocks self-healing schema changes.
+    return null;
+  }
+}
+
+async function getPreferences(userId: string) {
+  try {
+    await ensurePreferencesColumn();
+    const rows = await prisma.$queryRaw<Array<{ preferences: string | null }>>`SELECT "preferences" FROM "User" WHERE id = ${userId} LIMIT 1`;
+    return rows[0]?.preferences ?? null;
+  } catch {
     return null;
   }
 }
@@ -55,8 +72,8 @@ async function getWorkspaceUser(userId: string) {
     select: workspaceSelect,
   });
   if (!user) return null;
-  const [scheduleCategories, events] = await Promise.all([getScheduleCategories(userId), getEvents(userId)]);
-  return { ...user, scheduleCategories, events };
+  const [scheduleCategories, preferences, events] = await Promise.all([getScheduleCategories(userId), getPreferences(userId), getEvents(userId)]);
+  return { ...user, scheduleCategories, preferences, events };
 }
 
 export async function GET(request: NextRequest) {
@@ -78,9 +95,10 @@ export async function PATCH(request: NextRequest) {
   if (isAuthResponse(auth)) return auth;
   const { userId } = auth;
 
-  const body = await request.json().catch(() => ({})) as { name?: unknown; scheduleCategories?: unknown };
+  const body = await request.json().catch(() => ({})) as { name?: unknown; scheduleCategories?: unknown; preferences?: unknown };
   const data: { name?: string } = {};
   let serializedCategories: string | null | undefined;
+  let serializedPreferences: string | null | undefined;
 
   if (body.name !== undefined) {
     const name = typeof body.name === "string" ? body.name.trim() : "";
@@ -104,7 +122,18 @@ export async function PATCH(request: NextRequest) {
     serializedCategories = categories.length ? JSON.stringify(categories) : null;
   }
 
-  if (!Object.keys(data).length && serializedCategories === undefined) return NextResponse.json({ error: "No profile changes provided" }, { status: 400 });
+  if (body.preferences !== undefined) {
+    if (typeof body.preferences !== "object" || body.preferences === null || Array.isArray(body.preferences)) {
+      return NextResponse.json({ error: "Preferences must be an object" }, { status: 400 });
+    }
+    const input = body.preferences as { assignmentTrackerEnabled?: unknown; assignmentHighlightColor?: unknown };
+    serializedPreferences = JSON.stringify({
+      assignmentTrackerEnabled: Boolean(input.assignmentTrackerEnabled),
+      assignmentHighlightColor: typeof input.assignmentHighlightColor === "string" && /^#[0-9a-f]{6}$/i.test(input.assignmentHighlightColor) ? input.assignmentHighlightColor : "#ffe45c",
+    });
+  }
+
+  if (!Object.keys(data).length && serializedCategories === undefined && serializedPreferences === undefined) return NextResponse.json({ error: "No profile changes provided" }, { status: 400 });
 
   if (Object.keys(data).length) {
     await prisma.user.update({
@@ -120,6 +149,15 @@ export async function PATCH(request: NextRequest) {
       await prisma.$executeRaw`UPDATE "User" SET "scheduleCategories" = ${serializedCategories} WHERE id = ${userId}`;
     } catch {
       return NextResponse.json({ error: "Could not save schedule categories" }, { status: 500 });
+    }
+  }
+
+  if (serializedPreferences !== undefined) {
+    try {
+      await ensurePreferencesColumn();
+      await prisma.$executeRaw`UPDATE "User" SET "preferences" = ${serializedPreferences} WHERE id = ${userId}`;
+    } catch {
+      return NextResponse.json({ error: "Could not save preferences" }, { status: 500 });
     }
   }
 

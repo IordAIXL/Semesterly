@@ -48,6 +48,7 @@ type ApiStudent = {
   year?: string | null;
   major?: string | null;
   scheduleCategories?: string | null;
+  preferences?: string | null;
   courses: Array<Course & { userId?: string }>;
   tasks: Array<Task & { userId?: string; dueAt: string | Date }>;
   events: Array<ScheduleEvent & { userId?: string; startsAt: string | Date; endsAt: string | Date }>;
@@ -191,6 +192,19 @@ function customOnly(categories: ScheduleCategory[]) {
   return categories.filter((item) => !defaultScheduleCategories.some((base) => base.id === item.id));
 }
 
+function parseUserPreferences(value?: string | null): Pick<StudentProfile, "assignmentTrackerEnabled" | "assignmentHighlightColor"> {
+  if (!value) return { assignmentTrackerEnabled: false, assignmentHighlightColor: defaultAssignmentHighlightColor };
+  try {
+    const parsed = JSON.parse(value) as { assignmentTrackerEnabled?: unknown; assignmentHighlightColor?: unknown };
+    return {
+      assignmentTrackerEnabled: Boolean(parsed.assignmentTrackerEnabled),
+      assignmentHighlightColor: typeof parsed.assignmentHighlightColor === "string" && /^#[0-9a-f]{6}$/i.test(parsed.assignmentHighlightColor) ? parsed.assignmentHighlightColor : defaultAssignmentHighlightColor,
+    };
+  } catch {
+    return { assignmentTrackerEnabled: false, assignmentHighlightColor: defaultAssignmentHighlightColor };
+  }
+}
+
 function mapTask(task: ApiStudent["tasks"][number]): Task {
   return {
     id: task.id,
@@ -301,7 +315,8 @@ export function SemesterlyApp() {
   })).sort((a, b) => b.minutes - a.minutes);
 
   function applyApiStudent(user: ApiStudent) {
-    setStudentProfile((profile) => ({ ...profile, name: user.name, school: user.school, year: user.year, major: user.major, scheduleCategories: parseScheduleCategories(user.scheduleCategories) }));
+    const preferences = parseUserPreferences(user.preferences);
+    setStudentProfile((profile) => ({ ...profile, ...preferences, name: user.name, school: user.school, year: user.year, major: user.major, scheduleCategories: parseScheduleCategories(user.scheduleCategories) }));
     setCourses(user.courses.map((course) => ({ id: course.id, code: course.code, name: course.name, color: course.color, importance: course.importance, location: course.location })));
     setTasks(user.tasks.map(mapTask));
     setSchedule(user.events.map(mapEvent));
@@ -564,9 +579,21 @@ export function SemesterlyApp() {
     setActionNotice("Updated schedule categories.");
   }
 
-  function updateAssignmentTrackerSettings(settings: Pick<StudentProfile, "assignmentTrackerEnabled" | "assignmentHighlightColor">) {
+  async function updateAssignmentTrackerSettings(settings: Pick<StudentProfile, "assignmentTrackerEnabled" | "assignmentHighlightColor">) {
     setStudentProfile((profile) => ({ ...profile, ...settings }));
     if (!settings.assignmentTrackerEnabled && view === "assignments") setView("dashboard");
+    if (dataMode === "api") {
+      try {
+        const body = await apiJson<{ user: ApiStudent }>("/api/me", {
+          method: "PATCH",
+          body: JSON.stringify({ preferences: settings }),
+        });
+        const preferences = parseUserPreferences(body.user.preferences);
+        setStudentProfile((profile) => ({ ...profile, ...preferences, name: body.user.name, school: body.user.school, year: body.user.year, major: body.user.major, scheduleCategories: parseScheduleCategories(body.user.scheduleCategories) }));
+      } catch {
+        setDataMode("local");
+      }
+    }
     setActionNotice("Updated assignment tracker settings.");
   }
 
